@@ -8,7 +8,7 @@ async function init(){
   else data = await fetch('../data/verses.json').then(r=>r.json());
   bind(); render();
 }
-function save(){ data.version='1.02'; localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); render(); }
+function save(){ data.version='1.04'; localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); render(); }
 function bind(){
   $('#activePack').onchange = e => { data.activePackId=e.target.value; save(); };
   $('#savePack').onclick = () => { pack.name=$('#packName').value; pack.description=$('#packDescription').value; pack.translation=$('#translation').value; save(); };
