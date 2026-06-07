@@ -6,6 +6,25 @@ let data, pack, verses = [], currentVerse, currentGame = null;
 let progress = JSON.parse(localStorage.getItem(LS_PROGRESS) || '{"stars":0,"completed":{}}');
 const $ = s => document.querySelector(s);
 const cleanWords = text => text.replace(/[“”]/g,'"').match(/[A-Za-z’'0-9]+|[,.;:!?]/g) || [];
+
+const STARTER_VERSES = [
+  {id:'john-3-16-web', reference:'John 3:16', text:'For God so loved the world, that he gave his one and only Son, that whoever believes in him should not perish, but have eternal life.', category:"God's Love"},
+  {id:'psalm-23-1-web', reference:'Psalm 23:1', text:'Yahweh is my shepherd: I shall lack nothing.', category:'Trust'},
+  {id:'philippians-4-13-web', reference:'Philippians 4:13', text:'I can do all things through Christ, who strengthens me.', category:'Courage'},
+  {id:'genesis-1-1-web', reference:'Genesis 1:1', text:'In the beginning, God created the heavens and the earth.', category:'Creation'},
+  {id:'psalm-119-105-web', reference:'Psalm 119:105', text:'Your word is a lamp to my feet, and a light for my path.', category:"God's Word"},
+  {id:'proverbs-3-5-6-web', reference:'Proverbs 3:5-6', text:'Trust in Yahweh with all your heart, and don’t lean on your own understanding. In all your ways acknowledge him, and he will make your paths straight.', category:'Trust'},
+  {id:'matthew-5-14-web', reference:'Matthew 5:14', text:'You are the light of the world. A city located on a hill can’t be hidden.', category:'Light'},
+  {id:'romans-8-28-web', reference:'Romans 8:28', text:'We know that all things work together for good for those who love God, to those who are called according to his purpose.', category:'Hope'}
+];
+const STARTER_COLLECTION = { id:'starter-pack-protected', name:'Starter Pack', protected:true, system:true, description:'Protected starter collection of beginner-friendly memory verses.', translation:'WEB', verses: STARTER_VERSES };
+function ensureStarterCollection(){
+  if(!data) return;
+  data.collections = data.collections || [];
+  data.collections = data.collections.filter(c => c.id !== STARTER_COLLECTION.id && c.name !== 'Starter Pack');
+  data.collections.unshift(JSON.parse(JSON.stringify(STARTER_COLLECTION)));
+}
+
 function save(){ localStorage.setItem(LS_PROGRESS, JSON.stringify(progress)); updateStats(); renderVerseList(); }
 function shuffle(a){ return [...a].sort(()=>Math.random()-.5); }
 async function loadData(){
@@ -14,6 +33,9 @@ async function loadData(){
   const admin = JSON.parse(localStorage.getItem(LS_ADMIN_DATA) || 'null');
   if(admin) data = admin;
   if(!data) throw new Error('No verse data found.');
+  data.version = '1.09';
+  ensureStarterCollection();
+  try{ localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); }catch(e){}
   pack = data.packs.find(p=>p.id===data.activePackId) || data.packs[0];
   verses = pack.verses || [];
   setupBrand(); setupTabs(); updateStats(); selectVerse(verses[0]?.id); renderVerseList();
