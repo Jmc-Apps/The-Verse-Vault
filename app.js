@@ -33,10 +33,7 @@ function showTab(id){
 function selectVerse(id){
   currentVerse = verses.find(v=>v.id===id) || verses[0];
   if(!currentVerse) return;
-  $('#verseText').textContent = currentVerse.text;
-  $('#verseReference').textContent = currentVerse.reference + (pack.translation ? ` (${pack.translation})` : '');
-  $('#verseCategory').textContent = currentVerse.category || 'Memory Verse';
-  $('#gameArea').innerHTML = '<p>Choose a game to begin.</p>';
+  $('#gameArea').innerHTML = currentVerse ? `<p><strong>Selected verse:</strong> ${currentVerse.reference}${pack.translation ? ` (${pack.translation})` : ''}</p><p class="hint">Choose a game to begin.</p>` : '<p>Choose a verse from All Verses first.</p>';
   renderVerseList();
 }
 function renderVerseList(){
@@ -73,7 +70,7 @@ function missingGame(){
   const words = cleanWords(currentVerse.text).filter(w=>/[A-Za-z]/.test(w));
   const hidden = shuffle(words).slice(0, Math.min(4, Math.max(2, Math.floor(words.length/5))));
   let html = currentVerse.text;
-  hidden.forEach((w,i)=>{ html = html.replace(new RegExp('\\b'+w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b'), `<input class="missing" data-answer="${w}" placeholder="word ${i+1}">`); });
+  hidden.forEach((w,i)=>{ html = html.replace(new RegExp('\\b'+w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b'), `<input class="missing inlineMissing" data-answer="${w}" aria-label="Missing word ${i+1}" placeholder="?">`); });
   $('#gameArea').innerHTML = `<h3>Missing Words</h3><p>Type the missing words.</p><blockquote>${html}</blockquote><button data-missing-check>Check Answer</button><p id="feedback"></p>`;
 }
 function checkMissing(){
