@@ -5,19 +5,62 @@
   "packs": [
     {
       "id": "starter",
-      "name": "GBC",
-      "description": "Holiday Club Memory Verses",
+      "name": "Starter Memory Verses",
+      "description": "A protected starter pack for learning beginner-friendly Bible verses.",
       "translation": "WEB",
       "verses": [
         {
-          "id": "test-1-1-1780850811001",
-          "reference": "test 1:1",
-          "category": "test",
-          "text": "test test"
+          "id": "john-3-16-web",
+          "reference": "John 3:16",
+          "text": "For God so loved the world, that he gave his one and only Son, that whoever believes in him should not perish, but have eternal life.",
+          "category": "God's Love"
+        },
+        {
+          "id": "psalm-23-1-web",
+          "reference": "Psalm 23:1",
+          "text": "Yahweh is my shepherd: I shall lack nothing.",
+          "category": "Trust"
+        },
+        {
+          "id": "philippians-4-13-web",
+          "reference": "Philippians 4:13",
+          "text": "I can do all things through Christ, who strengthens me.",
+          "category": "Courage"
+        },
+        {
+          "id": "genesis-1-1-web",
+          "reference": "Genesis 1:1",
+          "text": "In the beginning, God created the heavens and the earth.",
+          "category": "Creation"
+        },
+        {
+          "id": "psalm-119-105-web",
+          "reference": "Psalm 119:105",
+          "text": "Your word is a lamp to my feet, and a light for my path.",
+          "category": "God's Word"
+        },
+        {
+          "id": "proverbs-3-5-6-web",
+          "reference": "Proverbs 3:5-6",
+          "text": "Trust in Yahweh with all your heart, and don\u2019t lean on your own understanding. In all your ways acknowledge him, and he will make your paths straight.",
+          "category": "Trust"
+        },
+        {
+          "id": "matthew-5-14-web",
+          "reference": "Matthew 5:14",
+          "text": "You are the light of the world. A city located on a hill can\u2019t be hidden.",
+          "category": "Light"
+        },
+        {
+          "id": "romans-8-28-web",
+          "reference": "Romans 8:28",
+          "text": "We know that all things work together for good for those who love God, to those who are called according to his purpose.",
+          "category": "Hope"
         }
       ]
     }
   ],
+  "version": "1.16",
   "collections": [
     {
       "id": "starter-pack-protected",
@@ -60,13 +103,13 @@
         {
           "id": "proverbs-3-5-6-web",
           "reference": "Proverbs 3:5-6",
-          "text": "Trust in Yahweh with all your heart, and don’t lean on your own understanding. In all your ways acknowledge him, and he will make your paths straight.",
+          "text": "Trust in Yahweh with all your heart, and don\u2019t lean on your own understanding. In all your ways acknowledge him, and he will make your paths straight.",
           "category": "Trust"
         },
         {
           "id": "matthew-5-14-web",
           "reference": "Matthew 5:14",
-          "text": "You are the light of the world. A city located on a hill can’t be hidden.",
+          "text": "You are the light of the world. A city located on a hill can\u2019t be hidden.",
           "category": "Light"
         },
         {
@@ -78,6 +121,5 @@
       ]
     }
   ],
-  "version": "1.16",
-  "certificateCollectionName": "GBC Kidds Memory Verse Term 2"
+  "certificateCollectionName": "Memory Verses"
 }
