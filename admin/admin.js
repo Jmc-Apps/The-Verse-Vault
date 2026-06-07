@@ -43,7 +43,7 @@ async function init(){
   await loadAdminGlobalBranding();
   bind(); render();
 }
-function save(){ ensureStarterCollection(); data.version='1.23'; data.collections=data.collections||[]; localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); render(); }
+function save(){ ensureStarterCollection(); data.version='1.24'; data.collections=data.collections||[]; localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); render(); }
 function bind(){
   if($('#activePack')) $('#activePack').onchange = e => { data.activePackId=e.target.value; save(); };
   if($('#savePack')) $('#savePack').onclick = () => { pack.name=$('#packName').value; pack.description=$('#packDescription').value; pack.translation=$('#translation').value; save(); };
@@ -215,7 +215,7 @@ function backupFileName(){
   return `VerseVault_Backup_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}.json`;
 }
 function exportJson(){
-  data.version = '1.23';
+  data.version = '1.24';
   const json = JSON.stringify(data,null,2);
   $('#jsonOutput').value = json;
   const blob = new Blob([json], {type:'application/json'});
@@ -240,7 +240,7 @@ function restoreBackup(){
       if(!confirm('Restoring a backup will replace the current verses and collections on this device. Continue?')) return;
       const currentPassword = localStorage.getItem(LS_ADMIN_PASSWORD);
       data = restored;
-      data.version = '1.23';
+      data.version = '1.24';
       data.collections = data.collections || [];
       ensureStarterCollection();
       localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data));
@@ -414,7 +414,7 @@ async function loadGithubJson(){
     validateBackup(restored);
     if(!confirm('Load the online GitHub verses.json into this Admin app? This replaces the current local admin data on this device.')) return;
     data = restored;
-    data.version = '1.23';
+    data.version = '1.24';
     data.collections = data.collections || [];
     ensureStarterCollection();
     localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data));
@@ -430,12 +430,12 @@ async function saveGithubJson(){
     if(!confirm('Save the current Admin verses and collections to GitHub as data/verses.json?')) return;
     setGithubMessage('Checking current online file...');
     ensureStarterCollection();
-    data.version = '1.23';
+    data.version = '1.24';
     const current = await githubFetchContents(cfg);
     const content = JSON.stringify(data, null, 2);
     const url = `https://api.github.com/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}/contents/${cfg.path.split('/').map(encodeURIComponent).join('/')}`;
     const body = {
-      message: `Update Verse Vault verses.json from Admin v1.23`,
+      message: `Update Verse Vault verses.json from Admin v1.24`,
       content: encodeBase64Unicode(content),
       sha: current.sha,
       branch: cfg.branch
