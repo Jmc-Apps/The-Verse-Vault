@@ -33,7 +33,7 @@ async function loadData(){
   const admin = JSON.parse(localStorage.getItem(LS_ADMIN_DATA) || 'null');
   if(admin) data = admin;
   if(!data) throw new Error('No verse data found.');
-  data.version = '1.15';
+  data.version = '1.16';
   ensureStarterCollection();
   try{ localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); }catch(e){}
   pack = data.packs.find(p=>p.id===data.activePackId) || data.packs[0];

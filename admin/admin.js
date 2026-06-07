@@ -1,5 +1,6 @@
 const LS_ADMIN_DATA = 'bvq-admin-data-v1';
 const LS_ADMIN_PASSWORD = 'vv-admin-password-v1';
+const LS_GITHUB_SETTINGS = 'vv-github-settings-v1';
 const DEFAULT_LOGO = '../assets/default-title-logo.png';
 const $ = s => document.querySelector(s);
 let data, pack;
@@ -39,7 +40,7 @@ async function init(){
   ensureStarterCollection();
   bind(); render();
 }
-function save(){ ensureStarterCollection(); data.version='1.12'; data.collections=data.collections||[]; localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); render(); }
+function save(){ ensureStarterCollection(); data.version='1.16'; data.collections=data.collections||[]; localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); render(); }
 function bind(){
   if($('#activePack')) $('#activePack').onchange = e => { data.activePackId=e.target.value; save(); };
   if($('#savePack')) $('#savePack').onclick = () => { pack.name=$('#packName').value; pack.description=$('#packDescription').value; pack.translation=$('#translation').value; save(); };
@@ -57,6 +58,10 @@ function bind(){
   $('#exportJson').onclick = exportJson;
   $('#copyJson').onclick = copyJson;
   if($('#restoreBackup')) $('#restoreBackup').onclick = restoreBackup;
+  if($('#saveGithubSettings')) $('#saveGithubSettings').onclick = saveGithubSettings;
+  if($('#clearGithubSettings')) $('#clearGithubSettings').onclick = clearGithubSettings;
+  if($('#loadGithubJson')) $('#loadGithubJson').onclick = loadGithubJson;
+  if($('#saveGithubJson')) $('#saveGithubJson').onclick = saveGithubJson;
   $('#resetDemo').onclick = () => { localStorage.removeItem(LS_ADMIN_DATA); location.reload(); };
 }
 function render(){
@@ -66,6 +71,7 @@ function render(){
   if($('#packDescription')) $('#packDescription').value = pack.description || '';
   if($('#translation')) $('#translation').value = pack.translation || '';
   if($('#certificateCollectionName')) $('#certificateCollectionName').value = data.certificateCollectionName || pack.certificateName || pack.name || '';
+  renderGithubSettings();
   $('#previewLogo').innerHTML = `<img class="brandImg" src="${data.titleBarImage || DEFAULT_LOGO}" alt="Title image preview">`;
   $('#verseList').innerHTML = (pack.verses||[]).map(v=>`<div class="verseCard"><strong>${v.reference}</strong> <span class="pill">${v.category||''}</span><p>${v.text}</p><div class="buttonRow"><button onclick="editVerse('${v.id}')">Edit</button><button class="danger" onclick="deleteVerse('${v.id}')">Delete</button></div></div>`).join('');
   renderCollections();
@@ -152,7 +158,7 @@ function backupFileName(){
   return `VerseVault_Backup_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}.json`;
 }
 function exportJson(){
-  data.version = '1.12';
+  data.version = '1.16';
   const json = JSON.stringify(data,null,2);
   $('#jsonOutput').value = json;
   const blob = new Blob([json], {type:'application/json'});
@@ -177,7 +183,7 @@ function restoreBackup(){
       if(!confirm('Restoring a backup will replace the current verses and collections on this device. Continue?')) return;
       const currentPassword = localStorage.getItem(LS_ADMIN_PASSWORD);
       data = restored;
-      data.version = '1.12';
+      data.version = '1.16';
       data.collections = data.collections || [];
       ensureStarterCollection();
       localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data));
@@ -195,4 +201,112 @@ async function copyJson(){
   const json = JSON.stringify(data,null,2); $('#jsonOutput').value=json;
   try{ await navigator.clipboard.writeText(json); alert('JSON copied.'); } catch(e){ alert('Copy failed. You can select the text manually.'); }
 }
+
+function getGithubSettings(){
+  try{ return JSON.parse(localStorage.getItem(LS_GITHUB_SETTINGS) || '{}'); }catch(e){ return {}; }
+}
+function setGithubMessage(text, good=false){
+  const msg = $('#githubMessage');
+  if(!msg) return;
+  msg.className = good ? 'ok' : 'bad';
+  msg.textContent = text || '';
+}
+function renderGithubSettings(){
+  if(!$('#githubOwner')) return;
+  const cfg = getGithubSettings();
+  $('#githubOwner').value = cfg.owner || '';
+  $('#githubRepo').value = cfg.repo || '';
+  $('#githubBranch').value = cfg.branch || 'main';
+  $('#githubPath').value = cfg.path || 'data/verses.json';
+  $('#githubToken').value = cfg.token || '';
+}
+function readGithubForm(){
+  return {
+    owner: $('#githubOwner').value.trim(),
+    repo: $('#githubRepo').value.trim(),
+    branch: ($('#githubBranch').value.trim() || 'main'),
+    path: ($('#githubPath').value.trim() || 'data/verses.json'),
+    token: $('#githubToken').value.trim()
+  };
+}
+function validateGithubConfig(cfg){
+  if(!cfg.owner || !cfg.repo || !cfg.path || !cfg.branch) throw new Error('Enter GitHub owner, repository, branch and file path.');
+  if(!cfg.token) throw new Error('Enter a GitHub token with Contents read/write permission.');
+}
+function saveGithubSettings(){
+  const cfg = readGithubForm();
+  try{ validateGithubConfig(cfg); }catch(err){ setGithubMessage(err.message); return; }
+  localStorage.setItem(LS_GITHUB_SETTINGS, JSON.stringify(cfg));
+  setGithubMessage('GitHub settings saved on this device only.', true);
+}
+function clearGithubSettings(){
+  if(!confirm('Clear saved GitHub settings and token from this device?')) return;
+  localStorage.removeItem(LS_GITHUB_SETTINGS);
+  renderGithubSettings();
+  setGithubMessage('GitHub settings cleared.', true);
+}
+async function githubFetchContents(cfg){
+  const url = `https://api.github.com/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}/contents/${cfg.path.split('/').map(encodeURIComponent).join('/')}?ref=${encodeURIComponent(cfg.branch)}`;
+  const res = await fetch(url, {headers:{'Accept':'application/vnd.github+json','Authorization':`Bearer ${cfg.token}`,'X-GitHub-Api-Version':'2022-11-28'}});
+  const json = await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error(json.message || 'GitHub request failed.');
+  return json;
+}
+function decodeBase64Unicode(value){
+  const bin = atob(String(value || '').replace(/\n/g,''));
+  const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
+function encodeBase64Unicode(value){
+  const bytes = new TextEncoder().encode(value);
+  let bin = '';
+  bytes.forEach(b => bin += String.fromCharCode(b));
+  return btoa(bin);
+}
+async function loadGithubJson(){
+  const cfg = readGithubForm();
+  try{
+    validateGithubConfig(cfg);
+    setGithubMessage('Loading online verses.json from GitHub...');
+    const file = await githubFetchContents(cfg);
+    const restored = JSON.parse(decodeBase64Unicode(file.content));
+    validateBackup(restored);
+    if(!confirm('Load the online GitHub verses.json into this Admin app? This replaces the current local admin data on this device.')) return;
+    data = restored;
+    data.version = '1.16';
+    data.collections = data.collections || [];
+    ensureStarterCollection();
+    localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data));
+    localStorage.setItem(LS_GITHUB_SETTINGS, JSON.stringify(cfg));
+    setGithubMessage('Online verses.json loaded successfully.', true);
+    render();
+  }catch(err){ setGithubMessage(err.message || 'GitHub load failed.'); }
+}
+async function saveGithubJson(){
+  const cfg = readGithubForm();
+  try{
+    validateGithubConfig(cfg);
+    if(!confirm('Save the current Admin verses and collections to GitHub as data/verses.json?')) return;
+    setGithubMessage('Checking current online file...');
+    ensureStarterCollection();
+    data.version = '1.16';
+    const current = await githubFetchContents(cfg);
+    const content = JSON.stringify(data, null, 2);
+    const url = `https://api.github.com/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}/contents/${cfg.path.split('/').map(encodeURIComponent).join('/')}`;
+    const body = {
+      message: `Update Verse Vault verses.json from Admin v1.16`,
+      content: encodeBase64Unicode(content),
+      sha: current.sha,
+      branch: cfg.branch
+    };
+    const res = await fetch(url, {method:'PUT', headers:{'Accept':'application/vnd.github+json','Content-Type':'application/json','Authorization':`Bearer ${cfg.token}`,'X-GitHub-Api-Version':'2022-11-28'}, body: JSON.stringify(body)});
+    const json = await res.json().catch(()=>({}));
+    if(!res.ok) throw new Error(json.message || 'GitHub save failed.');
+    localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data));
+    localStorage.setItem(LS_GITHUB_SETTINGS, JSON.stringify(cfg));
+    $('#jsonOutput').value = content;
+    setGithubMessage('Saved online to GitHub. GitHub Pages may take a short moment to show the update.', true);
+  }catch(err){ setGithubMessage(err.message || 'GitHub save failed.'); }
+}
+
 requireLogin();

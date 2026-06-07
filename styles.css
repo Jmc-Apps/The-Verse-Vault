@@ -80,3 +80,6 @@
   .certCircleBottomRight{width:46mm!important;height:46mm!important;right:11mm!important;bottom:11mm!important;border:4mm solid #ffca28!important;opacity:.55!important;}
   @page{size:A4 landscape;margin:0;}
 }
+
+/* v1.16 GitHub admin integration */
+.githubGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:10px 0}.githubGrid input{width:100%}#githubMessage.ok{color:#0b7d2b;font-weight:900}#githubMessage.bad{color:#c62828;font-weight:900}
