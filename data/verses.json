@@ -1,0 +1,45 @@
+{
+  "appTitle": "The Verse Vault",
+  "titleBarImage": "",
+  "activePackId": "starter",
+  "packs": [
+    {
+      "id": "starter",
+      "name": "Starter Memory Verses",
+      "description": "A small public-domain starter pack for Version 1.",
+      "translation": "WEB",
+      "verses": [
+        {
+          "id": "john-3-16-web",
+          "reference": "John 3:16",
+          "text": "For God so loved the world, that he gave his one and only Son, that whoever believes in him should not perish, but have eternal life.",
+          "category": "God's Love"
+        },
+        {
+          "id": "psalm-119-105-web",
+          "reference": "Psalm 119:105",
+          "text": "Your word is a lamp to my feet, and a light for my path.",
+          "category": "God's Word"
+        },
+        {
+          "id": "proverbs-3-5-web",
+          "reference": "Proverbs 3:5",
+          "text": "Trust in Yahweh with all your heart, and don\u2019t lean on your own understanding.",
+          "category": "Trust"
+        },
+        {
+          "id": "philippians-4-13-web",
+          "reference": "Philippians 4:13",
+          "text": "I can do all things through Christ, who strengthens me.",
+          "category": "Courage"
+        },
+        {
+          "id": "romans-12-12-web",
+          "reference": "Romans 12:12",
+          "text": "rejoicing in hope; enduring in troubles; continuing steadfastly in prayer;",
+          "category": "Prayer"
+        }
+      ]
+    }
+  ]
+}
