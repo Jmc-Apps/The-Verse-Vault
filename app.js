@@ -3,7 +3,8 @@ const BRANDING_URL = './data/branding.json';
 function noCacheUrl(url){ return url + (url.includes('?') ? '&' : '?') + 'v=' + Date.now(); }
 const LS_PROGRESS = 'bvq-progress-v1';
 const LS_ADMIN_DATA = 'bvq-admin-data-v1';
-const DEFAULT_LOGO = './assets/default-title-logo.png';
+const DEFAULT_LOGO = new URL('./assets/default-title-logo.png', document.baseURI).href;
+let effectiveLogoSrc = DEFAULT_LOGO;
 let data, pack, verses = [], currentVerse, currentGame = null;
 let progress = JSON.parse(localStorage.getItem(LS_PROGRESS) || '{"stars":0,"completed":{}}');
 const $ = s => document.querySelector(s);
@@ -45,8 +46,29 @@ async function loadGlobalBranding(){
     data.titleBarImage = onlineLogo;
   }
 }
+function normalizeLogoSrc(src){
+  src = String(src || '').trim();
+  if(!src) return DEFAULT_LOGO;
+  if(src.startsWith('data:') || src.startsWith('http://') || src.startsWith('https://')) return src;
+  src = src.replace(/^\.\//, '').replace(/^\.\.\//, '');
+  const clean = src.split('?')[0].split('#')[0];
+  if(clean.startsWith('assets/') || clean.startsWith('branding/')){
+    return new URL('./' + clean, document.baseURI).href + '?v=' + Date.now();
+  }
+  return new URL(clean, document.baseURI).href;
+}
+function preloadLogo(src){
+  return new Promise(resolve => {
+    const wanted = normalizeLogoSrc(src);
+    if(!wanted || wanted === DEFAULT_LOGO) return resolve(DEFAULT_LOGO);
+    const img = new Image();
+    img.onload = () => resolve(wanted);
+    img.onerror = () => resolve(DEFAULT_LOGO);
+    img.src = wanted;
+  });
+}
 function currentLogoSrc(){
-  return (data && data.titleBarImage) ? data.titleBarImage : DEFAULT_LOGO;
+  return effectiveLogoSrc || DEFAULT_LOGO;
 }
 
 function shuffle(a){ return [...a].sort(()=>Math.random()-.5); }
@@ -58,7 +80,7 @@ async function loadData(){
   }
   catch(e){ data = JSON.parse(localStorage.getItem(LS_ADMIN_DATA) || 'null'); }
   if(!data) throw new Error('No verse data found.');
-  data.version = '1.22';
+  data.version = '1.23';
   ensureStarterCollection();
   await loadGlobalBranding();
   try{ localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); }catch(e){}
@@ -67,8 +89,14 @@ async function loadData(){
   setupBrand(); setupTabs(); setupCertificate(); updateStats(); selectVerse(verses[0]?.id); renderVerseList(); renderCertificate();
 }
 function setupBrand(){
-  const src = currentLogoSrc();
-  $('#brandImageWrap').innerHTML = `<img class="brandImg" alt="The Verse Vault title artwork" src="${src}" onerror="this.onerror=null;this.src='./assets/default-title-logo.png';">`;
+  effectiveLogoSrc = DEFAULT_LOGO;
+  $('#brandImageWrap').innerHTML = `<img class="brandImg" alt="The Verse Vault title artwork" src="${DEFAULT_LOGO}">`;
+  const desired = data && data.titleBarImage ? data.titleBarImage : DEFAULT_LOGO;
+  preloadLogo(desired).then(src => {
+    effectiveLogoSrc = src;
+    $('#brandImageWrap').innerHTML = `<img class="brandImg" alt="The Verse Vault title artwork" src="${src}">`;
+    renderCertificate();
+  });
 }
 function setupTabs(){
   document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>showTab(btn.dataset.tab)));

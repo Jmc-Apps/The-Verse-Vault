@@ -2,7 +2,8 @@ const LS_ADMIN_DATA = 'bvq-admin-data-v1';
 const LS_ADMIN_PASSWORD = 'vv-admin-password-v1';
 const LS_GITHUB_SETTINGS = 'vv-github-settings-v1';
 const LS_PENDING_LOGO = 'vv-pending-logo-v1';
-const DEFAULT_LOGO = '../assets/default-title-logo.png';
+const DEFAULT_LOGO = new URL('../assets/default-title-logo.png', document.baseURI).href;
+let effectiveAdminLogoSrc = DEFAULT_LOGO;
 const $ = s => document.querySelector(s);
 let data, pack, pendingLogoDataUrl='';
 
@@ -42,7 +43,7 @@ async function init(){
   await loadAdminGlobalBranding();
   bind(); render();
 }
-function save(){ ensureStarterCollection(); data.version='1.22'; data.collections=data.collections||[]; localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); render(); }
+function save(){ ensureStarterCollection(); data.version='1.23'; data.collections=data.collections||[]; localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); render(); }
 function bind(){
   if($('#activePack')) $('#activePack').onchange = e => { data.activePackId=e.target.value; save(); };
   if($('#savePack')) $('#savePack').onclick = () => { pack.name=$('#packName').value; pack.description=$('#packDescription').value; pack.translation=$('#translation').value; save(); };
@@ -72,10 +73,22 @@ function normalizeAdminLogoSrc(src){
   src = String(src || '').trim();
   if(!src) return DEFAULT_LOGO;
   if(src.startsWith('data:') || src.startsWith('http://') || src.startsWith('https://')) return src;
-  src = src.replace(/^\.\//, '').replace(/^\.\.\//, '');
-  if(src.startsWith('admin/')) src = src.slice(6);
-  if(src.startsWith('assets/') || src.startsWith('branding/')) return '../' + src + (src.includes('?') ? '&' : '?') + 'v=' + Date.now();
-  return src;
+  src = src.replace(/^\.\//, '').replace(/^\.\.\//, '').replace(/^admin\//, '');
+  const clean = src.split('?')[0].split('#')[0];
+  if(clean.startsWith('assets/') || clean.startsWith('branding/')){
+    return new URL('../' + clean, document.baseURI).href + '?v=' + Date.now();
+  }
+  return new URL(clean, document.baseURI).href;
+}
+function preloadLogo(src){
+  return new Promise(resolve => {
+    const wanted = normalizeAdminLogoSrc(src);
+    if(!wanted || wanted === DEFAULT_LOGO) return resolve(DEFAULT_LOGO);
+    const img = new Image();
+    img.onload = () => resolve(wanted);
+    img.onerror = () => resolve(DEFAULT_LOGO);
+    img.src = wanted;
+  });
 }
 async function loadAdminGlobalBranding(){
   try{
@@ -88,15 +101,19 @@ async function loadAdminGlobalBranding(){
   }catch(e){}
 }
 function currentAdminLogoSrc(){
-  const src = pendingLogoDataUrl || localStorage.getItem(LS_PENDING_LOGO) || data.titleBarImage;
-  if(!src) return '../assets/default-title-logo.png?v=' + Date.now();
+  const src = pendingLogoDataUrl || localStorage.getItem(LS_PENDING_LOGO) || data.titleBarImage || DEFAULT_LOGO;
   return normalizeAdminLogoSrc(src);
 }
-function refreshBrandingPreview(){
-  const src = currentAdminLogoSrc();
-  const html = `<img class="brandImg" src="${src}" alt="Current title logo preview" onerror="this.onerror=null;this.src='../assets/default-title-logo.png';">`;
+function setLogoContainers(src){
+  effectiveAdminLogoSrc = src || DEFAULT_LOGO;
+  const html = `<img class="brandImg" src="${effectiveAdminLogoSrc}" alt="Current title logo preview">`;
   if($('#previewLogo')) $('#previewLogo').innerHTML = html;
   if($('#brandingLogoPreview')) $('#brandingLogoPreview').innerHTML = html;
+}
+function refreshBrandingPreview(){
+  setLogoContainers(DEFAULT_LOGO); // show bundled logo instantly, never a broken image icon
+  const desired = currentAdminLogoSrc();
+  preloadLogo(desired).then(setLogoContainers);
 }
 function render(){
   pack = data.packs.find(p=>p.id===data.activePackId) || data.packs[0];
@@ -198,7 +215,7 @@ function backupFileName(){
   return `VerseVault_Backup_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}.json`;
 }
 function exportJson(){
-  data.version = '1.22';
+  data.version = '1.23';
   const json = JSON.stringify(data,null,2);
   $('#jsonOutput').value = json;
   const blob = new Blob([json], {type:'application/json'});
@@ -223,7 +240,7 @@ function restoreBackup(){
       if(!confirm('Restoring a backup will replace the current verses and collections on this device. Continue?')) return;
       const currentPassword = localStorage.getItem(LS_ADMIN_PASSWORD);
       data = restored;
-      data.version = '1.22';
+      data.version = '1.23';
       data.collections = data.collections || [];
       ensureStarterCollection();
       localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data));
@@ -397,7 +414,7 @@ async function loadGithubJson(){
     validateBackup(restored);
     if(!confirm('Load the online GitHub verses.json into this Admin app? This replaces the current local admin data on this device.')) return;
     data = restored;
-    data.version = '1.22';
+    data.version = '1.23';
     data.collections = data.collections || [];
     ensureStarterCollection();
     localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data));
@@ -413,12 +430,12 @@ async function saveGithubJson(){
     if(!confirm('Save the current Admin verses and collections to GitHub as data/verses.json?')) return;
     setGithubMessage('Checking current online file...');
     ensureStarterCollection();
-    data.version = '1.22';
+    data.version = '1.23';
     const current = await githubFetchContents(cfg);
     const content = JSON.stringify(data, null, 2);
     const url = `https://api.github.com/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}/contents/${cfg.path.split('/').map(encodeURIComponent).join('/')}`;
     const body = {
-      message: `Update Verse Vault verses.json from Admin v1.22`,
+      message: `Update Verse Vault verses.json from Admin v1.23`,
       content: encodeBase64Unicode(content),
       sha: current.sha,
       branch: cfg.branch
