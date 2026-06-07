@@ -33,15 +33,14 @@ async function loadData(){
   const admin = JSON.parse(localStorage.getItem(LS_ADMIN_DATA) || 'null');
   if(admin) data = admin;
   if(!data) throw new Error('No verse data found.');
-  data.version = '1.09';
+  data.version = '1.10';
   ensureStarterCollection();
   try{ localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); }catch(e){}
   pack = data.packs.find(p=>p.id===data.activePackId) || data.packs[0];
   verses = pack.verses || [];
-  setupBrand(); setupTabs(); updateStats(); selectVerse(verses[0]?.id); renderVerseList();
+  setupBrand(); setupTabs(); setupCertificate(); updateStats(); selectVerse(verses[0]?.id); renderVerseList(); renderCertificate();
 }
 function setupBrand(){
-  $('#packName').textContent = pack.name || 'Verse Pack';
   const src = data.titleBarImage || DEFAULT_LOGO;
   $('#brandImageWrap').innerHTML = `<img class="brandImg" alt="The Verse Vault title artwork" src="${src}">`;
 }
@@ -57,6 +56,7 @@ function selectVerse(id){
   if(!currentVerse) return;
   $('#gameArea').innerHTML = currentVerse ? `<p><strong>Selected verse:</strong> ${currentVerse.reference}${pack.translation ? ` (${pack.translation})` : ''}</p><p class="hint">Choose a game to begin.</p>` : '<p>Choose a verse from All Verses first.</p>';
   renderVerseList();
+  renderCertificate();
 }
 function renderVerseList(){
   if(!$('#verseList') || !verses.length) return;
@@ -83,6 +83,33 @@ function loadNextVerse(game){
     selectVerse(verses[nextIndex]?.id);
     startGame(game);
   }, 900);
+}
+function setupCertificate(){
+  const nameInput = $('#certificateName');
+  const printBtn = $('#printCertificate');
+  if(nameInput) nameInput.addEventListener('input', renderCertificate);
+  if(printBtn) printBtn.addEventListener('click', () => { renderCertificate(); window.print(); });
+}
+function longDate(){
+  return new Date().toLocaleDateString(undefined, {year:'numeric', month:'long', day:'numeric'});
+}
+function renderCertificate(){
+  const preview = $('#certificatePreview');
+  if(!preview || !pack) return;
+  const learner = ($('#certificateName')?.value || '').trim() || 'Learner Name';
+  const logoSrc = (data && data.titleBarImage) ? data.titleBarImage : DEFAULT_LOGO;
+  const collectionName = pack.name || 'Current Verse Collection';
+  preview.innerHTML = `<div class="certificateSheet">
+    <img class="certificateLogo" src="${logoSrc}" alt="The Verse Vault logo">
+    <h1>Certificate of Achievement</h1>
+    <p class="certLine">This certifies that</p>
+    <div class="certName">${learner.replace(/[&<>]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[ch]))}</div>
+    <p class="certLine">has successfully mastered the memory verses in</p>
+    <div class="certCollection">${collectionName.replace(/[&<>]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[ch]))}</div>
+    <p class="certLine">Awarded on</p>
+    <div class="certDate">${longDate()}</div>
+    <p class="certCongrats">Congratulations on mastering God's Word!</p>
+  </div>`;
 }
 document.addEventListener('click', e=>{
   const card = e.target.closest('[data-verse-id]');
