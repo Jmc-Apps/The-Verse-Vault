@@ -1,5 +1,6 @@
 {
-  "titleBarImage": "branding/logo.png",
-  "logoPath": "branding/logo.png",
-  "updatedAt": "2026-06-07T18:19:50.270Z"
+  "titleBarImage": "assets/default-title-logo.png",
+  "logoPath": "assets/default-title-logo.png",
+  "updatedAt": "",
+  "restoredDefault": true
 }

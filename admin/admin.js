@@ -41,7 +41,7 @@ async function init(){
   ensureStarterCollection();
   bind(); render();
 }
-function save(){ ensureStarterCollection(); data.version='1.19'; data.collections=data.collections||[]; localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); render(); }
+function save(){ ensureStarterCollection(); data.version='1.20'; data.collections=data.collections||[]; localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); render(); }
 function bind(){
   if($('#activePack')) $('#activePack').onchange = e => { data.activePackId=e.target.value; save(); };
   if($('#savePack')) $('#savePack').onclick = () => { pack.name=$('#packName').value; pack.description=$('#packDescription').value; pack.translation=$('#translation').value; save(); };
@@ -50,7 +50,7 @@ function bind(){
   $('#logoUpload').onchange = handleLogo;
   if($('#saveBrandingGithub')) $('#saveBrandingGithub').onclick = saveBrandingToGithub;
   $('#clearLogo').onclick = () => { data.titleBarImage=''; pendingLogoDataUrl=''; localStorage.removeItem(LS_PENDING_LOGO); save(); setBrandingMessage('Custom local preview removed. Use Restore Default Logo or save a new logo to GitHub for global changes.', true); };
-  $('#restoreLogo').onclick = () => { data.titleBarImage=''; pendingLogoDataUrl=''; localStorage.removeItem(LS_PENDING_LOGO); save(); setBrandingMessage('Default logo restored locally. To make the default global, update or remove data/branding.json in GitHub.', true); };
+  if($('#restoreLogo')) $('#restoreLogo').onclick = restoreDefaultLogoGlobal;
   $('#saveVerse').onclick = saveVerse;
   $('#newVerse').onclick = clearVerseForm;
   $('#saveCollection').onclick = saveCollection;
@@ -167,7 +167,7 @@ function backupFileName(){
   return `VerseVault_Backup_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}.json`;
 }
 function exportJson(){
-  data.version = '1.19';
+  data.version = '1.20';
   const json = JSON.stringify(data,null,2);
   $('#jsonOutput').value = json;
   const blob = new Blob([json], {type:'application/json'});
@@ -192,7 +192,7 @@ function restoreBackup(){
       if(!confirm('Restoring a backup will replace the current verses and collections on this device. Continue?')) return;
       const currentPassword = localStorage.getItem(LS_ADMIN_PASSWORD);
       data = restored;
-      data.version = '1.19';
+      data.version = '1.20';
       data.collections = data.collections || [];
       ensureStarterCollection();
       localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data));
@@ -304,6 +304,28 @@ async function saveBrandingToGithub(){
   }catch(err){ setBrandingMessage(err.message || 'Branding save failed.'); }
 }
 
+async function restoreDefaultLogoGlobal(){
+  const cfg = readGithubForm();
+  pendingLogoDataUrl = '';
+  localStorage.removeItem(LS_PENDING_LOGO);
+  data.titleBarImage = '';
+  localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data));
+  render();
+  try{
+    validateGithubConfig(cfg);
+    if(!confirm('Restore the original Verse Vault title logo globally for all browsers?')) return;
+    setBrandingMessage('Restoring original logo globally...', true);
+    const branding = { titleBarImage: 'assets/default-title-logo.png', logoPath: 'assets/default-title-logo.png', updatedAt: new Date().toISOString(), restoredDefault: true };
+    await githubPutText(cfg, 'data/branding.json', JSON.stringify(branding, null, 2), 'Restore Verse Vault default global branding');
+    data.titleBarImage = DEFAULT_LOGO + '?v=' + Date.now();
+    localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data));
+    render();
+    setBrandingMessage('Original title logo restored globally. Other browsers will use it after they load the app again.', true);
+  }catch(err){
+    setBrandingMessage('Original title logo restored on this device. To restore it globally, enter GitHub settings and try again. ' + (err.message || ''), false);
+  }
+}
+
 function saveGithubSettings(){
   const cfg = readGithubForm();
   try{ validateGithubConfig(cfg); }catch(err){ setGithubMessage(err.message); return; }
@@ -344,7 +366,7 @@ async function loadGithubJson(){
     validateBackup(restored);
     if(!confirm('Load the online GitHub verses.json into this Admin app? This replaces the current local admin data on this device.')) return;
     data = restored;
-    data.version = '1.19';
+    data.version = '1.20';
     data.collections = data.collections || [];
     ensureStarterCollection();
     localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data));
@@ -360,12 +382,12 @@ async function saveGithubJson(){
     if(!confirm('Save the current Admin verses and collections to GitHub as data/verses.json?')) return;
     setGithubMessage('Checking current online file...');
     ensureStarterCollection();
-    data.version = '1.19';
+    data.version = '1.20';
     const current = await githubFetchContents(cfg);
     const content = JSON.stringify(data, null, 2);
     const url = `https://api.github.com/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}/contents/${cfg.path.split('/').map(encodeURIComponent).join('/')}`;
     const body = {
-      message: `Update Verse Vault verses.json from Admin v1.19`,
+      message: `Update Verse Vault verses.json from Admin v1.20`,
       content: encodeBase64Unicode(content),
       sha: current.sha,
       branch: cfg.branch

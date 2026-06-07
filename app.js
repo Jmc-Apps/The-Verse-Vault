@@ -58,7 +58,7 @@ async function loadData(){
   }
   catch(e){ data = JSON.parse(localStorage.getItem(LS_ADMIN_DATA) || 'null'); }
   if(!data) throw new Error('No verse data found.');
-  data.version = '1.19';
+  data.version = '1.20';
   ensureStarterCollection();
   await loadGlobalBranding();
   try{ localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); }catch(e){}
