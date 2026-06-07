@@ -1,4 +1,5 @@
 const DATA_URL = './data/verses.json';
+function noCacheUrl(url){ return url + (url.includes('?') ? '&' : '?') + 'v=' + Date.now(); }
 const LS_PROGRESS = 'bvq-progress-v1';
 const LS_ADMIN_DATA = 'bvq-admin-data-v1';
 const DEFAULT_LOGO = './assets/default-title-logo.png';
@@ -28,12 +29,14 @@ function ensureStarterCollection(){
 function save(){ localStorage.setItem(LS_PROGRESS, JSON.stringify(progress)); updateStats(); renderVerseList(); }
 function shuffle(a){ return [...a].sort(()=>Math.random()-.5); }
 async function loadData(){
-  try{ const r = await fetch(DATA_URL,{cache:'no-store'}); data = await r.json(); }
+  try{
+    const r = await fetch(noCacheUrl(DATA_URL), {cache:'no-store'});
+    if(!r.ok) throw new Error('Could not load online verses.json');
+    data = await r.json();
+  }
   catch(e){ data = JSON.parse(localStorage.getItem(LS_ADMIN_DATA) || 'null'); }
-  const admin = JSON.parse(localStorage.getItem(LS_ADMIN_DATA) || 'null');
-  if(admin) data = admin;
   if(!data) throw new Error('No verse data found.');
-  data.version = '1.16';
+  data.version = '1.18';
   ensureStarterCollection();
   try{ localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); }catch(e){}
   pack = data.packs.find(p=>p.id===data.activePackId) || data.packs[0];
