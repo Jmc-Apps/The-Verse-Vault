@@ -3,6 +3,25 @@ const LS_ADMIN_PASSWORD = 'vv-admin-password-v1';
 const DEFAULT_LOGO = '../assets/default-title-logo.png';
 const $ = s => document.querySelector(s);
 let data, pack;
+
+const STARTER_VERSES = [
+  {id:'john-3-16-web', reference:'John 3:16', text:'For God so loved the world, that he gave his one and only Son, that whoever believes in him should not perish, but have eternal life.', category:"God's Love"},
+  {id:'psalm-23-1-web', reference:'Psalm 23:1', text:'Yahweh is my shepherd: I shall lack nothing.', category:'Trust'},
+  {id:'philippians-4-13-web', reference:'Philippians 4:13', text:'I can do all things through Christ, who strengthens me.', category:'Courage'},
+  {id:'genesis-1-1-web', reference:'Genesis 1:1', text:'In the beginning, God created the heavens and the earth.', category:'Creation'},
+  {id:'psalm-119-105-web', reference:'Psalm 119:105', text:'Your word is a lamp to my feet, and a light for my path.', category:"God's Word"},
+  {id:'proverbs-3-5-6-web', reference:'Proverbs 3:5-6', text:'Trust in Yahweh with all your heart, and don’t lean on your own understanding. In all your ways acknowledge him, and he will make your paths straight.', category:'Trust'},
+  {id:'matthew-5-14-web', reference:'Matthew 5:14', text:'You are the light of the world. A city located on a hill can’t be hidden.', category:'Light'},
+  {id:'romans-8-28-web', reference:'Romans 8:28', text:'We know that all things work together for good for those who love God, to those who are called according to his purpose.', category:'Hope'}
+];
+const STARTER_COLLECTION = { id:'starter-pack-protected', name:'Starter Pack', protected:true, system:true, description:'Protected starter collection of beginner-friendly memory verses.', translation:'WEB', verses: STARTER_VERSES };
+function ensureStarterCollection(){
+  data.collections = data.collections || [];
+  data.collections = data.collections.filter(c => c.id !== STARTER_COLLECTION.id && c.name !== 'Starter Pack');
+  data.collections.unshift(JSON.parse(JSON.stringify(STARTER_COLLECTION)));
+}
+function isProtectedCollection(c){ return !!(c && (c.protected || c.system || c.id === STARTER_COLLECTION.id)); }
+
 function getPassword(){ return localStorage.getItem(LS_ADMIN_PASSWORD) || '0000'; }
 function requireLogin(){
   $('#adminLogin').onclick = () => {
@@ -17,9 +36,10 @@ async function init(){
   if(local) data = JSON.parse(local);
   else data = await fetch('../data/verses.json').then(r=>r.json());
   data.collections = data.collections || [];
+  ensureStarterCollection();
   bind(); render();
 }
-function save(){ data.version='1.05'; data.collections=data.collections||[]; localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); render(); }
+function save(){ ensureStarterCollection(); data.version='1.06'; data.collections=data.collections||[]; localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); render(); }
 function bind(){
   $('#activePack').onchange = e => { data.activePackId=e.target.value; save(); };
   $('#savePack').onclick = () => { pack.name=$('#packName').value; pack.description=$('#packDescription').value; pack.translation=$('#translation').value; save(); };
@@ -31,6 +51,7 @@ function bind(){
   $('#saveCollection').onclick = saveCollection;
   $('#loadCollection').onclick = loadCollection;
   $('#deleteCollection').onclick = deleteCollection;
+  $('#duplicateCollection').onclick = duplicateCollection;
   $('#changePassword').onclick = changePassword;
   $('#exportJson').onclick = exportJson;
   $('#copyJson').onclick = copyJson;
@@ -47,15 +68,16 @@ function render(){
   renderCollections();
 }
 function renderCollections(){
-  data.collections = data.collections || [];
-  $('#collectionSelect').innerHTML = data.collections.length ? data.collections.map(c=>`<option value="${c.id}">${c.name} (${(c.verses||[]).length} verses)</option>`).join('') : '<option value="">No collections saved yet</option>';
-  $('#collectionList').innerHTML = data.collections.map(c=>`<div class="collectionItem"><strong>${c.name}</strong><br><small>${(c.verses||[]).length} verses saved</small></div>`).join('') || '<p class="hint">No collections yet.</p>';
+  ensureStarterCollection();
+  $('#collectionSelect').innerHTML = data.collections.length ? data.collections.map(c=>`<option value="${c.id}">${isProtectedCollection(c) ? '🔒 ' : ''}${c.name} (${(c.verses||[]).length} verses)</option>`).join('') : '<option value="">No collections saved yet</option>';
+  $('#collectionList').innerHTML = data.collections.map(c=>`<div class="collectionItem ${isProtectedCollection(c)?'protectedCollection':''}"><strong>${isProtectedCollection(c) ? '🔒 ' : ''}${c.name}</strong><br><small>${(c.verses||[]).length} verses saved${isProtectedCollection(c)?' • protected system collection':''}</small></div>`).join('') || '<p class="hint">No collections yet.</p>';
 }
 function saveCollection(){
   const name = $('#collectionName').value.trim();
   if(!name) return alert('Please enter a collection name.');
   const existing = data.collections.find(c=>c.name.toLowerCase()===name.toLowerCase());
-  const collection = { id: existing?.id || ('collection-' + Date.now()), name, verses: JSON.parse(JSON.stringify(pack.verses||[])), translation: pack.translation || '' };
+  if(isProtectedCollection(existing)) return alert('The Starter Pack is protected and cannot be renamed or overwritten. Use Duplicate Collection first, then edit the copy.');
+  const collection = { id: existing?.id || ('collection-' + Date.now()), name, protected:false, verses: JSON.parse(JSON.stringify(pack.verses||[])), translation: pack.translation || '' };
   if(existing) Object.assign(existing, collection); else data.collections.push(collection);
   $('#collectionName').value=''; save();
 }
@@ -71,7 +93,20 @@ function loadCollection(){
 function deleteCollection(){
   const id = $('#collectionSelect').value; const c = data.collections.find(x=>x.id===id);
   if(!c) return alert('Choose a collection first.');
+  if(isProtectedCollection(c)) return alert('The Starter Pack is protected and cannot be deleted.');
   if(confirm(`Delete collection "${c.name}"?`)){ data.collections = data.collections.filter(x=>x.id!==id); save(); }
+}
+function duplicateCollection(){
+  const id = $('#collectionSelect').value; const c = data.collections.find(x=>x.id===id);
+  if(!c) return alert('Choose a collection first.');
+  const copy = JSON.parse(JSON.stringify(c));
+  copy.id = 'collection-' + Date.now();
+  copy.name = isProtectedCollection(c) ? 'Starter Pack Copy' : `${c.name} Copy`;
+  copy.protected = false;
+  copy.system = false;
+  data.collections.push(copy);
+  save();
+  alert(`Created "${copy.name}".`);
 }
 function changePassword(){
   const current = $('#currentPassword').value;
