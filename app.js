@@ -1,4 +1,5 @@
 const DATA_URL = './data/verses.json';
+const BRANDING_URL = './data/branding.json';
 function noCacheUrl(url){ return url + (url.includes('?') ? '&' : '?') + 'v=' + Date.now(); }
 const LS_PROGRESS = 'bvq-progress-v1';
 const LS_ADMIN_DATA = 'bvq-admin-data-v1';
@@ -27,6 +28,27 @@ function ensureStarterCollection(){
 }
 
 function save(){ localStorage.setItem(LS_PROGRESS, JSON.stringify(progress)); updateStats(); renderVerseList(); }
+
+async function loadGlobalBranding(){
+  try{
+    const r = await fetch(noCacheUrl(BRANDING_URL), {cache:'no-store'});
+    if(r.ok){
+      const b = await r.json();
+      branding = b && typeof b === 'object' ? b : {};
+    }
+  }catch(e){ branding = {}; }
+  const onlineLogo = branding.titleBarImage || branding.logoPath || '';
+  if(onlineLogo && !onlineLogo.startsWith('data:')){
+    const clean = onlineLogo.replace(/^\.\//,'');
+    data.titleBarImage = './' + clean + (clean.includes('?') ? '&' : '?') + 'v=' + Date.now();
+  } else if(onlineLogo) {
+    data.titleBarImage = onlineLogo;
+  }
+}
+function currentLogoSrc(){
+  return (data && data.titleBarImage) ? data.titleBarImage : DEFAULT_LOGO;
+}
+
 function shuffle(a){ return [...a].sort(()=>Math.random()-.5); }
 async function loadData(){
   try{
@@ -36,15 +58,16 @@ async function loadData(){
   }
   catch(e){ data = JSON.parse(localStorage.getItem(LS_ADMIN_DATA) || 'null'); }
   if(!data) throw new Error('No verse data found.');
-  data.version = '1.18';
+  data.version = '1.19';
   ensureStarterCollection();
+  await loadGlobalBranding();
   try{ localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); }catch(e){}
   pack = data.packs.find(p=>p.id===data.activePackId) || data.packs[0];
   verses = pack.verses || [];
   setupBrand(); setupTabs(); setupCertificate(); updateStats(); selectVerse(verses[0]?.id); renderVerseList(); renderCertificate();
 }
 function setupBrand(){
-  const src = data.titleBarImage || DEFAULT_LOGO;
+  const src = currentLogoSrc();
   $('#brandImageWrap').innerHTML = `<img class="brandImg" alt="The Verse Vault title artwork" src="${src}">`;
 }
 function setupTabs(){
@@ -154,7 +177,7 @@ function renderCertificate(){
     return;
   }
   const learner = (nameInput?.value || '').trim() || 'Learner Name';
-  const logoSrc = (data && data.titleBarImage) ? data.titleBarImage : DEFAULT_LOGO;
+  const logoSrc = currentLogoSrc();
   preview.innerHTML = `<div class="certificateSheet">
     <div class="certCircle certCircleTopLeft" aria-hidden="true"></div>
     <div class="certCircle certCircleTopRight" aria-hidden="true"></div>

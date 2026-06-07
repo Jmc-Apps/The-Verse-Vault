@@ -1,9 +1,10 @@
 const LS_ADMIN_DATA = 'bvq-admin-data-v1';
 const LS_ADMIN_PASSWORD = 'vv-admin-password-v1';
 const LS_GITHUB_SETTINGS = 'vv-github-settings-v1';
+const LS_PENDING_LOGO = 'vv-pending-logo-v1';
 const DEFAULT_LOGO = '../assets/default-title-logo.png';
 const $ = s => document.querySelector(s);
-let data, pack;
+let data, pack, pendingLogoDataUrl='';
 
 const STARTER_VERSES = [
   {id:'john-3-16-web', reference:'John 3:16', text:'For God so loved the world, that he gave his one and only Son, that whoever believes in him should not perish, but have eternal life.', category:"God's Love"},
@@ -40,14 +41,16 @@ async function init(){
   ensureStarterCollection();
   bind(); render();
 }
-function save(){ ensureStarterCollection(); data.version='1.18'; data.collections=data.collections||[]; localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); render(); }
+function save(){ ensureStarterCollection(); data.version='1.19'; data.collections=data.collections||[]; localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); render(); }
 function bind(){
   if($('#activePack')) $('#activePack').onchange = e => { data.activePackId=e.target.value; save(); };
   if($('#savePack')) $('#savePack').onclick = () => { pack.name=$('#packName').value; pack.description=$('#packDescription').value; pack.translation=$('#translation').value; save(); };
   if($('#saveCertificateName')) $('#saveCertificateName').onclick = () => { data.certificateCollectionName = $('#certificateCollectionName').value.trim(); save(); alert('Certificate name saved.'); };
+  if($('#chooseLogo')) $('#chooseLogo').onclick = () => $('#logoUpload').click();
   $('#logoUpload').onchange = handleLogo;
-  $('#clearLogo').onclick = () => { data.titleBarImage=''; save(); };
-  $('#restoreLogo').onclick = () => { data.titleBarImage=''; save(); };
+  if($('#saveBrandingGithub')) $('#saveBrandingGithub').onclick = saveBrandingToGithub;
+  $('#clearLogo').onclick = () => { data.titleBarImage=''; pendingLogoDataUrl=''; localStorage.removeItem(LS_PENDING_LOGO); save(); setBrandingMessage('Custom local preview removed. Use Restore Default Logo or save a new logo to GitHub for global changes.', true); };
+  $('#restoreLogo').onclick = () => { data.titleBarImage=''; pendingLogoDataUrl=''; localStorage.removeItem(LS_PENDING_LOGO); save(); setBrandingMessage('Default logo restored locally. To make the default global, update or remove data/branding.json in GitHub.', true); };
   $('#saveVerse').onclick = saveVerse;
   $('#newVerse').onclick = clearVerseForm;
   $('#saveCollection').onclick = saveCollection;
@@ -134,7 +137,13 @@ function handleLogo(e){
   if(!file) return;
   if(file.type !== 'image/png') return alert('Please choose a transparent PNG file.');
   const reader = new FileReader();
-  reader.onload = () => { data.titleBarImage = reader.result; save(); };
+  reader.onload = () => {
+    pendingLogoDataUrl = reader.result;
+    localStorage.setItem(LS_PENDING_LOGO, pendingLogoDataUrl);
+    data.titleBarImage = pendingLogoDataUrl;
+    save();
+    setBrandingMessage('Logo selected and previewed locally. Use Save Branding to GitHub to make it appear on other browsers.', true);
+  };
   reader.readAsDataURL(file);
 }
 function saveVerse(){
@@ -158,7 +167,7 @@ function backupFileName(){
   return `VerseVault_Backup_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}.json`;
 }
 function exportJson(){
-  data.version = '1.18';
+  data.version = '1.19';
   const json = JSON.stringify(data,null,2);
   $('#jsonOutput').value = json;
   const blob = new Blob([json], {type:'application/json'});
@@ -183,7 +192,7 @@ function restoreBackup(){
       if(!confirm('Restoring a backup will replace the current verses and collections on this device. Continue?')) return;
       const currentPassword = localStorage.getItem(LS_ADMIN_PASSWORD);
       data = restored;
-      data.version = '1.18';
+      data.version = '1.19';
       data.collections = data.collections || [];
       ensureStarterCollection();
       localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data));
@@ -233,6 +242,68 @@ function validateGithubConfig(cfg){
   if(!cfg.owner || !cfg.repo || !cfg.path || !cfg.branch) throw new Error('Enter GitHub owner, repository, branch and file path.');
   if(!cfg.token) throw new Error('Enter a GitHub token with Contents read/write permission.');
 }
+
+function setBrandingMessage(message, ok=false){
+  const el = $('#brandingMessage');
+  if(el){ el.textContent = message || ''; el.className = ok ? 'ok' : 'bad'; }
+}
+function githubContentUrl(cfg, path){
+  return `https://api.github.com/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}/contents/${String(path).split('/').map(encodeURIComponent).join('/')}`;
+}
+async function githubGetContents(cfg, path, allowMissing=false){
+  const url = githubContentUrl(cfg, path) + `?ref=${encodeURIComponent(cfg.branch)}`;
+  const res = await fetch(url, {headers:{'Accept':'application/vnd.github+json','Authorization':`Bearer ${cfg.token}`,'X-GitHub-Api-Version':'2022-11-28'}});
+  const json = await res.json().catch(()=>({}));
+  if(!res.ok){
+    if(allowMissing && res.status === 404) return null;
+    throw new Error(json.message || `GitHub request failed for ${path}.`);
+  }
+  return json;
+}
+async function githubPutText(cfg, path, text, message){
+  const current = await githubGetContents(cfg, path, true);
+  const body = { message, content: encodeBase64Unicode(text), branch: cfg.branch };
+  if(current && current.sha) body.sha = current.sha;
+  const res = await fetch(githubContentUrl(cfg, path), {method:'PUT', headers:{'Accept':'application/vnd.github+json','Content-Type':'application/json','Authorization':`Bearer ${cfg.token}`,'X-GitHub-Api-Version':'2022-11-28'}, body: JSON.stringify(body)});
+  const json = await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error(json.message || `GitHub save failed for ${path}.`);
+  return json;
+}
+function dataUrlToBase64(dataUrl){
+  const match = String(dataUrl || '').match(/^data:image\/png;base64,(.+)$/);
+  if(!match) throw new Error('Please choose a PNG logo image first.');
+  return match[1];
+}
+async function githubPutBase64(cfg, path, base64Content, message){
+  const current = await githubGetContents(cfg, path, true);
+  const body = { message, content: base64Content, branch: cfg.branch };
+  if(current && current.sha) body.sha = current.sha;
+  const res = await fetch(githubContentUrl(cfg, path), {method:'PUT', headers:{'Accept':'application/vnd.github+json','Content-Type':'application/json','Authorization':`Bearer ${cfg.token}`,'X-GitHub-Api-Version':'2022-11-28'}, body: JSON.stringify(body)});
+  const json = await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error(json.message || `GitHub save failed for ${path}.`);
+  return json;
+}
+async function saveBrandingToGithub(){
+  const cfg = readGithubForm();
+  try{
+    validateGithubConfig(cfg);
+    const logoData = pendingLogoDataUrl || localStorage.getItem(LS_PENDING_LOGO) || (String(data.titleBarImage||'').startsWith('data:image/png;base64,') ? data.titleBarImage : '');
+    if(!logoData) throw new Error('Choose a PNG logo image first.');
+    if(!confirm('Save this logo to GitHub so all browsers use it?')) return;
+    setBrandingMessage('Uploading logo to GitHub...', true);
+    const logoPath = 'branding/logo.png';
+    await githubPutBase64(cfg, logoPath, dataUrlToBase64(logoData), 'Update Verse Vault global logo');
+    const branding = { titleBarImage: logoPath, logoPath, updatedAt: new Date().toISOString() };
+    await githubPutText(cfg, 'data/branding.json', JSON.stringify(branding, null, 2), 'Update Verse Vault global branding');
+    data.titleBarImage = './' + logoPath + '?v=' + Date.now();
+    localStorage.removeItem(LS_PENDING_LOGO);
+    pendingLogoDataUrl = '';
+    localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data));
+    render();
+    setBrandingMessage('Branding saved to GitHub. Other browsers will use this logo after they load the app again.', true);
+  }catch(err){ setBrandingMessage(err.message || 'Branding save failed.'); }
+}
+
 function saveGithubSettings(){
   const cfg = readGithubForm();
   try{ validateGithubConfig(cfg); }catch(err){ setGithubMessage(err.message); return; }
@@ -273,7 +344,7 @@ async function loadGithubJson(){
     validateBackup(restored);
     if(!confirm('Load the online GitHub verses.json into this Admin app? This replaces the current local admin data on this device.')) return;
     data = restored;
-    data.version = '1.18';
+    data.version = '1.19';
     data.collections = data.collections || [];
     ensureStarterCollection();
     localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data));
@@ -289,12 +360,12 @@ async function saveGithubJson(){
     if(!confirm('Save the current Admin verses and collections to GitHub as data/verses.json?')) return;
     setGithubMessage('Checking current online file...');
     ensureStarterCollection();
-    data.version = '1.18';
+    data.version = '1.19';
     const current = await githubFetchContents(cfg);
     const content = JSON.stringify(data, null, 2);
     const url = `https://api.github.com/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}/contents/${cfg.path.split('/').map(encodeURIComponent).join('/')}`;
     const body = {
-      message: `Update Verse Vault verses.json from Admin v1.18`,
+      message: `Update Verse Vault verses.json from Admin v1.19`,
       content: encodeBase64Unicode(content),
       sha: current.sha,
       branch: cfg.branch

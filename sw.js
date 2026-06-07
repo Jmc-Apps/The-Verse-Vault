@@ -1,4 +1,4 @@
-const CACHE = 'the-verse-vault-v1-18';
+const CACHE = 'the-verse-vault-v1-19';
 const ASSETS = [
   './', './index.html', './styles.css', './app.js', './manifest.json',
   './admin/index.html', './admin/admin.js',
@@ -21,7 +21,7 @@ self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
   // Always fetch fresh verse data so GitHub Pages / hosted JSON updates appear in other browsers.
-  if (url.pathname.endsWith('/data/verses.json')) {
+  if (url.pathname.endsWith('/data/verses.json') || url.pathname.endsWith('/data/branding.json') || url.pathname.endsWith('/branding/logo.png')) {
     event.respondWith(fetch(new Request(event.request, { cache: 'no-store' })));
     return;
   }
