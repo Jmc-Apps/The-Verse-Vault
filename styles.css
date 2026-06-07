@@ -85,3 +85,7 @@
 .githubGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:10px 0}.githubGrid input{width:100%}#githubMessage.ok{color:#0b7d2b;font-weight:900}#githubMessage.bad{color:#c62828;font-weight:900}
 
 .hiddenFile{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}.adminLogoTools{align-items:center}
+
+.brandingPreviewBox{background:#fff;border:3px dashed var(--blue);border-radius:20px;padding:14px;margin:12px 0;text-align:center}
+.brandingLogoPreview{display:flex;align-items:center;justify-content:center;min-height:130px;background:linear-gradient(135deg,rgba(229,57,53,.12),rgba(255,202,40,.18),rgba(46,184,92,.12),rgba(25,118,210,.12));border-radius:16px;padding:12px}
+.brandingLogoPreview .brandImg{max-height:150px;max-width:100%;}
