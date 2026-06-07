@@ -2,7 +2,7 @@ const DATA_URL = './data/verses.json';
 const LS_PROGRESS = 'bvq-progress-v1';
 const LS_ADMIN_DATA = 'bvq-admin-data-v1';
 const DEFAULT_LOGO = './assets/default-title-logo.png';
-let data, pack, verses = [], currentVerse;
+let data, pack, verses = [], currentVerse, currentGame = null;
 let progress = JSON.parse(localStorage.getItem(LS_PROGRESS) || '{"stars":0,"completed":{}}');
 const $ = s => document.querySelector(s);
 const cleanWords = text => text.replace(/[“”]/g,'"').match(/[A-Za-z’'0-9]+|[,.;:!?]/g) || [];
@@ -53,6 +53,15 @@ function reward(game){
   progress.completed[key]=true;
   save();
 }
+function loadNextVerse(game){
+  if(!verses.length || !currentVerse) return;
+  const currentIndex = verses.findIndex(v => v.id === currentVerse.id);
+  const nextIndex = verses.length > 1 ? (currentIndex + 1) % verses.length : currentIndex;
+  setTimeout(() => {
+    selectVerse(verses[nextIndex]?.id);
+    startGame(game);
+  }, 900);
+}
 document.addEventListener('click', e=>{
   const card = e.target.closest('[data-verse-id]');
   if(card){ selectVerse(card.dataset.verseId); showTab('playTab'); window.scrollTo({top:0,behavior:'smooth'}); }
@@ -62,6 +71,7 @@ document.addEventListener('click', e=>{
   if(e.target.matches('[data-quiz]')) checkQuiz(e.target.dataset.quiz);
 });
 function startGame(game){
+  currentGame = game;
   if(game==='missing') missingGame();
   if(game==='order') orderGame();
   if(game==='quiz') quizGame();
@@ -76,8 +86,8 @@ function missingGame(){
 function checkMissing(){
   const inputs=[...document.querySelectorAll('.missing')];
   const ok=inputs.every(i=>i.value.trim().toLowerCase()===i.dataset.answer.toLowerCase());
-  $('#feedback').innerHTML = ok ? '<span class="ok">Great job! +3 stars</span>' : '<span class="bad">Try again. Check the spelling carefully.</span>';
-  if(ok) reward('missing');
+  $('#feedback').innerHTML = ok ? '<span class="ok">Great job! +3 stars — loading the next verse...</span>' : '<span class="bad">Try again. Check the spelling carefully.</span>';
+  if(ok){ reward('missing'); loadNextVerse('missing'); }
 }
 function orderGame(){
   const words=cleanWords(currentVerse.text).filter(w=>/[A-Za-z0-9]/.test(w));
@@ -88,8 +98,8 @@ function checkOrder(){
   const chosen=[...$('#answerBox').querySelectorAll('.chip')].map(c=>c.textContent).join(' ');
   const correct=cleanWords(currentVerse.text).filter(w=>/[A-Za-z0-9]/.test(w)).join(' ');
   const ok = chosen === correct;
-  $('#feedback').innerHTML = ok ? '<span class="ok">Excellent memory! +3 stars</span>' : '<span class="bad">Not quite yet. Try the order again.</span>';
-  if(ok) reward('order');
+  $('#feedback').innerHTML = ok ? '<span class="ok">Excellent memory! +3 stars — loading the next verse...</span>' : '<span class="bad">Not quite yet. Try the order again.</span>';
+  if(ok){ reward('order'); loadNextVerse('order'); }
 }
 function quizGame(){
   const choices=shuffle([currentVerse, ...shuffle(verses.filter(v=>v.id!==currentVerse.id)).slice(0,3)]);
@@ -97,8 +107,8 @@ function quizGame(){
 }
 function checkQuiz(id){
   const ok = id === currentVerse.id;
-  $('#feedback').innerHTML = ok ? '<span class="ok">Correct! +3 stars</span>' : '<span class="bad">Not that one. Try again.</span>';
-  if(ok) reward('quiz');
+  $('#feedback').innerHTML = ok ? '<span class="ok">Correct! +3 stars — loading the next verse...</span>' : '<span class="bad">Not that one. Try again.</span>';
+  if(ok){ reward('quiz'); loadNextVerse('quiz'); }
 }
 if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
 loadData().catch(err => $('#gameArea').innerHTML = `<p class="bad">${err.message}</p>`);
