@@ -33,7 +33,7 @@ async function loadData(){
   const admin = JSON.parse(localStorage.getItem(LS_ADMIN_DATA) || 'null');
   if(admin) data = admin;
   if(!data) throw new Error('No verse data found.');
-  data.version = '1.12';
+  data.version = '1.13';
   ensureStarterCollection();
   try{ localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); }catch(e){}
   pack = data.packs.find(p=>p.id===data.activePackId) || data.packs[0];
@@ -140,7 +140,11 @@ function renderCertificate(){
   const learner = (nameInput?.value || '').trim() || 'Learner Name';
   const logoSrc = (data && data.titleBarImage) ? data.titleBarImage : DEFAULT_LOGO;
   preview.innerHTML = `<div class="certificateSheet">
-    <img class="certificateLogo" src="${logoSrc}" alt="The Verse Vault logo">
+    <div class="certCircle certCircleTopLeft" aria-hidden="true"></div>
+    <div class="certCircle certCircleTopRight" aria-hidden="true"></div>
+    <div class="certCircle certCircleBottomLeft" aria-hidden="true"></div>
+    <div class="certCircle certCircleBottomRight" aria-hidden="true"></div>
+    <div class="certificateLogoBox"><img class="certificateLogo" src="${logoSrc}" alt="The Verse Vault logo"></div>
     <h1>Certificate of Achievement</h1>
     <p class="certLine">This certifies that</p>
     <div class="certName">${escapeHtml(learner)}</div>

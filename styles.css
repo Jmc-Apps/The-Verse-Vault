@@ -28,3 +28,55 @@
 @media print{body{background:white!important}.hero,.tabs,.panel:not(.certificatePanel),footer,#certificateName,#printCertificate,.certificatePanel>h2,.certificatePanel>.hint,.certificatePanel>label{display:none!important}main{max-width:none;margin:0;padding:0}.tabPage{display:block!important}.certificatePanel{display:block!important;border:0!important;box-shadow:none!important;margin:0!important;padding:0!important;background:white!important}.certificatePreview{margin:0!important}.certificateSheet{width:100vw;height:100vh;min-height:0;border-radius:0;box-shadow:none;page-break-inside:avoid;display:flex;flex-direction:column;justify-content:center}@page{size:A4 landscape;margin:0}}
 
 .certAppTitle{font-weight:1000;letter-spacing:.12em;color:var(--blue2);font-size:1.2rem;margin-bottom:4px}.certificateLocked{background:#fffdf6;border:5px solid var(--blue);border-radius:22px;padding:28px;text-align:center;color:var(--navy);box-shadow:0 8px 22px rgba(0,0,0,.16)}.certificateLocked h3{color:var(--red);margin-top:0}.certificateLocked strong{display:inline-block;margin-top:10px;background:var(--yellow);padding:10px 16px;border-radius:999px}button:disabled,input:disabled{opacity:.55;cursor:not-allowed}
+
+
+/* v1.13 certificate print fixes */
+.certificateSheet{
+  width:min(100%,1120px);
+  min-height:680px;
+  margin:0 auto;
+  padding:42px 56px;
+  border:14px solid var(--yellow);
+  border-radius:30px;
+  box-shadow:0 12px 35px rgba(0,0,0,.22), inset 0 0 0 9px var(--blue), inset 0 0 0 18px var(--green);
+  background:#fffdf6;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+.certificateSheet:before,.certificateSheet:after{display:none!important;}
+.certificateLogoBox{width:100%;display:flex;align-items:center;justify-content:center;text-align:center;margin:0 auto 8px;position:relative;z-index:2;}
+.certificateLogo{display:block;margin:0 auto;max-height:165px;max-width:420px;width:auto;height:auto;object-fit:contain;}
+.certCircle{position:absolute;border-radius:50%;z-index:0;pointer-events:none;background:transparent!important;}
+.certCircleTopLeft{width:190px;height:190px;left:28px;top:28px;border:16px solid var(--red);opacity:.28;}
+.certCircleTopRight{width:140px;height:140px;right:44px;top:48px;border:14px solid var(--blue);opacity:.26;}
+.certCircleBottomLeft{width:145px;height:145px;left:52px;bottom:46px;border:14px solid var(--green);opacity:.28;}
+.certCircleBottomRight{width:190px;height:190px;right:28px;bottom:28px;border:16px solid var(--yellow);opacity:.55;}
+.certificateSheet h1,.certLine,.certName,.certCollection,.certDate,.certCongrats{position:relative;z-index:2;}
+
+@media print{
+  html,body{width:297mm!important;height:210mm!important;margin:0!important;padding:0!important;overflow:hidden!important;background:white!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+  .hero,.tabs,.stats,.panel:not(.certificatePanel),footer,#certificateName,#printCertificate,.certificatePanel>h2,.certificatePanel>.hint,.certificatePanel>label{display:none!important;}
+  main{width:297mm!important;height:210mm!important;max-width:none!important;margin:0!important;padding:0!important;display:block!important;}
+  .tabPage{display:none!important;}
+  #certificateTab{display:block!important;width:297mm!important;height:210mm!important;margin:0!important;padding:0!important;}
+  .certificatePanel{display:block!important;width:297mm!important;height:210mm!important;border:0!important;box-shadow:none!important;margin:0!important;padding:0!important;background:white!important;}
+  .certificatePreview{width:297mm!important;height:210mm!important;margin:0!important;padding:0!important;display:flex!important;align-items:center!important;justify-content:center!important;background:white!important;}
+  .certificateSheet{box-sizing:border-box!important;width:282mm!important;height:195mm!important;min-height:0!important;margin:0!important;padding:12mm 18mm!important;border:5mm solid #ffca28!important;border-radius:0!important;box-shadow:inset 0 0 0 2.8mm #1976d2, inset 0 0 0 5.5mm #2eb85c!important;background:#fffdf6!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;text-align:center!important;page-break-inside:avoid!important;break-inside:avoid!important;overflow:hidden!important;}
+  .certificateLogoBox{display:flex!important;justify-content:center!important;align-items:center!important;width:100%!important;margin:0 0 4mm 0!important;}
+  .certificateLogo{display:block!important;margin:0 auto!important;max-height:32mm!important;max-width:92mm!important;object-fit:contain!important;}
+  .certificateSheet h1{font-size:22pt!important;margin:2mm 0 5mm 0!important;line-height:1.1!important;}
+  .certLine{font-size:10.5pt!important;margin:2.4mm 0!important;line-height:1.2!important;}
+  .certName{font-size:28pt!important;margin:2mm 0!important;line-height:1.1!important;}
+  .certCollection{font-size:20pt!important;margin:2mm 0!important;line-height:1.1!important;}
+  .certDate{font-size:14pt!important;margin:2mm 0!important;line-height:1.1!important;}
+  .certCongrats{font-size:12pt!important;margin-top:5mm!important;line-height:1.2!important;}
+  .certCircle{display:block!important;background:transparent!important;}
+  .certCircleTopLeft{width:46mm!important;height:46mm!important;left:11mm!important;top:11mm!important;border:4mm solid #e53935!important;opacity:.28!important;}
+  .certCircleTopRight{width:34mm!important;height:34mm!important;right:14mm!important;top:15mm!important;border:3.5mm solid #1976d2!important;opacity:.26!important;}
+  .certCircleBottomLeft{width:34mm!important;height:34mm!important;left:15mm!important;bottom:14mm!important;border:3.5mm solid #2eb85c!important;opacity:.28!important;}
+  .certCircleBottomRight{width:46mm!important;height:46mm!important;right:11mm!important;bottom:11mm!important;border:4mm solid #ffca28!important;opacity:.55!important;}
+  @page{size:A4 landscape;margin:0;}
+}
