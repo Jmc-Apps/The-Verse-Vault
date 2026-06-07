@@ -19,3 +19,5 @@
 /* v1.06 updates */
 .protectedCollection{border-color:var(--yellow);background:#fff8c8;}
 .protectedCollection strong{color:#9a5a00;}
+.restoreBox{margin-top:1rem;padding:1rem;border:2px dashed rgba(25,118,210,.35);border-radius:18px;background:rgba(255,255,255,.65)}
+.restoreBox h3{margin-top:0}

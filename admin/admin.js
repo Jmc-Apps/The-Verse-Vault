@@ -39,10 +39,10 @@ async function init(){
   ensureStarterCollection();
   bind(); render();
 }
-function save(){ ensureStarterCollection(); data.version='1.07'; data.collections=data.collections||[]; localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); render(); }
+function save(){ ensureStarterCollection(); data.version='1.08'; data.collections=data.collections||[]; localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); render(); }
 function bind(){
-  $('#activePack').onchange = e => { data.activePackId=e.target.value; save(); };
-  $('#savePack').onclick = () => { pack.name=$('#packName').value; pack.description=$('#packDescription').value; pack.translation=$('#translation').value; save(); };
+  if($('#activePack')) $('#activePack').onchange = e => { data.activePackId=e.target.value; save(); };
+  if($('#savePack')) $('#savePack').onclick = () => { pack.name=$('#packName').value; pack.description=$('#packDescription').value; pack.translation=$('#translation').value; save(); };
   $('#logoUpload').onchange = handleLogo;
   $('#clearLogo').onclick = () => { data.titleBarImage=''; save(); };
   $('#restoreLogo').onclick = () => { data.titleBarImage=''; save(); };
@@ -55,14 +55,15 @@ function bind(){
   $('#changePassword').onclick = changePassword;
   $('#exportJson').onclick = exportJson;
   $('#copyJson').onclick = copyJson;
+  if($('#restoreBackup')) $('#restoreBackup').onclick = restoreBackup;
   $('#resetDemo').onclick = () => { localStorage.removeItem(LS_ADMIN_DATA); location.reload(); };
 }
 function render(){
   pack = data.packs.find(p=>p.id===data.activePackId) || data.packs[0];
-  $('#activePack').innerHTML = data.packs.map(p=>`<option value="${p.id}" ${p.id===pack.id?'selected':''}>${p.name}</option>`).join('');
-  $('#packName').value = pack.name || '';
-  $('#packDescription').value = pack.description || '';
-  $('#translation').value = pack.translation || '';
+  if($('#activePack')) $('#activePack').innerHTML = data.packs.map(p=>`<option value="${p.id}" ${p.id===pack.id?'selected':''}>${p.name}</option>`).join('');
+  if($('#packName')) $('#packName').value = pack.name || '';
+  if($('#packDescription')) $('#packDescription').value = pack.description || '';
+  if($('#translation')) $('#translation').value = pack.translation || '';
   $('#previewLogo').innerHTML = `<img class="brandImg" src="${data.titleBarImage || DEFAULT_LOGO}" alt="Title image preview">`;
   $('#verseList').innerHTML = (pack.verses||[]).map(v=>`<div class="verseCard"><strong>${v.reference}</strong> <span class="pill">${v.category||''}</span><p>${v.text}</p><div class="buttonRow"><button onclick="editVerse('${v.id}')">Edit</button><button class="danger" onclick="deleteVerse('${v.id}')">Delete</button></div></div>`).join('');
   renderCollections();
@@ -143,12 +144,50 @@ function editVerse(id){
 }
 function deleteVerse(id){ if(confirm('Delete this verse?')){ pack.verses = pack.verses.filter(v=>v.id!==id); save(); } }
 function clearVerseForm(){ $('#editingId').value=''; $('#reference').value=''; $('#category').value=''; $('#text').value=''; }
+function backupFileName(){
+  const d = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  return `VerseVault_Backup_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}.json`;
+}
 function exportJson(){
+  data.version = '1.08';
   const json = JSON.stringify(data,null,2);
   $('#jsonOutput').value = json;
   const blob = new Blob([json], {type:'application/json'});
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href=url; a.download='verses.json'; a.click(); URL.revokeObjectURL(url);
+  const a = document.createElement('a'); a.href=url; a.download=backupFileName(); a.click(); URL.revokeObjectURL(url);
+}
+function validateBackup(obj){
+  if(!obj || typeof obj !== 'object') throw new Error('The selected file is not a valid Verse Vault backup.');
+  if(!Array.isArray(obj.packs)) throw new Error('Backup is missing verse pack data.');
+  if(!obj.packs.some(p => Array.isArray(p.verses))) throw new Error('Backup does not contain any verses.');
+  return true;
+}
+function restoreBackup(){
+  const input = $('#restoreFile');
+  const msg = $('#restoreMessage');
+  if(!input || !input.files || !input.files[0]) return alert('Choose a JSON backup file first.');
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const restored = JSON.parse(reader.result);
+      validateBackup(restored);
+      if(!confirm('Restoring a backup will replace the current verses and collections on this device. Continue?')) return;
+      const currentPassword = localStorage.getItem(LS_ADMIN_PASSWORD);
+      data = restored;
+      data.version = '1.08';
+      data.collections = data.collections || [];
+      ensureStarterCollection();
+      localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data));
+      if(currentPassword) localStorage.setItem(LS_ADMIN_PASSWORD, currentPassword);
+      msg.className='ok'; msg.textContent='Backup restored successfully.';
+      render();
+    }catch(err){
+      msg.className='bad'; msg.textContent=err.message || 'Restore failed.';
+      alert(msg.textContent);
+    }
+  };
+  reader.readAsText(input.files[0]);
 }
 async function copyJson(){
   const json = JSON.stringify(data,null,2); $('#jsonOutput').value=json;
