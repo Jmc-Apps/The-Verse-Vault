@@ -33,7 +33,7 @@ async function loadData(){
   const admin = JSON.parse(localStorage.getItem(LS_ADMIN_DATA) || 'null');
   if(admin) data = admin;
   if(!data) throw new Error('No verse data found.');
-  data.version = '1.11';
+  data.version = '1.12';
   ensureStarterCollection();
   try{ localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); }catch(e){}
   pack = data.packs.find(p=>p.id===data.activePackId) || data.packs[0];
@@ -88,11 +88,25 @@ function setupCertificate(){
   const nameInput = $('#certificateName');
   const printBtn = $('#printCertificate');
   if(nameInput) nameInput.addEventListener('input', renderCertificate);
-  if(printBtn) printBtn.addEventListener('click', () => { renderCertificate(); if(allCurrentVersesMastered()) window.print(); });
+  if(printBtn) printBtn.addEventListener('click', printCertificate);
 }
 function longDate(){
   return new Date().toLocaleDateString(undefined, {year:'numeric', month:'long', day:'numeric'});
 }
+function certificateListName(){
+  return (data?.certificateCollectionName || pack?.certificateName || pack?.name || 'Current Memory Verse List').trim();
+}
+function printCertificate(){
+  renderCertificate();
+  if(!allCurrentVersesMastered()){
+    alert('Keep practising! Master all verses in this set to unlock your certificate.');
+    return;
+  }
+  showTab('certificateTab');
+  document.body.classList.add('printingCertificate');
+  setTimeout(() => window.print(), 100);
+}
+window.addEventListener('afterprint', () => document.body.classList.remove('printingCertificate'));
 function escapeHtml(value){
   return String(value || '').replace(/[&<>]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[ch]));
 }
@@ -126,12 +140,12 @@ function renderCertificate(){
   const learner = (nameInput?.value || '').trim() || 'Learner Name';
   const logoSrc = (data && data.titleBarImage) ? data.titleBarImage : DEFAULT_LOGO;
   preview.innerHTML = `<div class="certificateSheet">
-    <div class="certAppTitle">THE VERSE VAULT</div>
     <img class="certificateLogo" src="${logoSrc}" alt="The Verse Vault logo">
     <h1>Certificate of Achievement</h1>
     <p class="certLine">This certifies that</p>
     <div class="certName">${escapeHtml(learner)}</div>
-    <p class="certLine">has successfully mastered the memory verses</p>
+    <p class="certLine">has successfully mastered the memory verses in</p>
+    <div class="certCollection">${escapeHtml(certificateListName())}</div>
     <p class="certLine">Awarded on</p>
     <div class="certDate">${longDate()}</div>
     <p class="certCongrats">Congratulations on mastering God's Word!</p>

@@ -60,7 +60,7 @@
       ]
     }
   ],
-  "version": "1.10",
+  "version": "1.12",
   "collections": [
     {
       "id": "starter-pack-protected",
@@ -120,5 +120,6 @@
         }
       ]
     }
-  ]
+  ],
+  "certificateCollectionName": "Memory Verses"
 }

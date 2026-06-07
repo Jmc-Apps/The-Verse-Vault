@@ -39,10 +39,11 @@ async function init(){
   ensureStarterCollection();
   bind(); render();
 }
-function save(){ ensureStarterCollection(); data.version='1.10'; data.collections=data.collections||[]; localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); render(); }
+function save(){ ensureStarterCollection(); data.version='1.12'; data.collections=data.collections||[]; localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); render(); }
 function bind(){
   if($('#activePack')) $('#activePack').onchange = e => { data.activePackId=e.target.value; save(); };
   if($('#savePack')) $('#savePack').onclick = () => { pack.name=$('#packName').value; pack.description=$('#packDescription').value; pack.translation=$('#translation').value; save(); };
+  if($('#saveCertificateName')) $('#saveCertificateName').onclick = () => { data.certificateCollectionName = $('#certificateCollectionName').value.trim(); save(); alert('Certificate name saved.'); };
   $('#logoUpload').onchange = handleLogo;
   $('#clearLogo').onclick = () => { data.titleBarImage=''; save(); };
   $('#restoreLogo').onclick = () => { data.titleBarImage=''; save(); };
@@ -64,6 +65,7 @@ function render(){
   if($('#packName')) $('#packName').value = pack.name || '';
   if($('#packDescription')) $('#packDescription').value = pack.description || '';
   if($('#translation')) $('#translation').value = pack.translation || '';
+  if($('#certificateCollectionName')) $('#certificateCollectionName').value = data.certificateCollectionName || pack.certificateName || pack.name || '';
   $('#previewLogo').innerHTML = `<img class="brandImg" src="${data.titleBarImage || DEFAULT_LOGO}" alt="Title image preview">`;
   $('#verseList').innerHTML = (pack.verses||[]).map(v=>`<div class="verseCard"><strong>${v.reference}</strong> <span class="pill">${v.category||''}</span><p>${v.text}</p><div class="buttonRow"><button onclick="editVerse('${v.id}')">Edit</button><button class="danger" onclick="deleteVerse('${v.id}')">Delete</button></div></div>`).join('');
   renderCollections();
@@ -150,7 +152,7 @@ function backupFileName(){
   return `VerseVault_Backup_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}.json`;
 }
 function exportJson(){
-  data.version = '1.10';
+  data.version = '1.12';
   const json = JSON.stringify(data,null,2);
   $('#jsonOutput').value = json;
   const blob = new Blob([json], {type:'application/json'});
@@ -175,7 +177,7 @@ function restoreBackup(){
       if(!confirm('Restoring a backup will replace the current verses and collections on this device. Continue?')) return;
       const currentPassword = localStorage.getItem(LS_ADMIN_PASSWORD);
       data = restored;
-      data.version = '1.10';
+      data.version = '1.12';
       data.collections = data.collections || [];
       ensureStarterCollection();
       localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data));

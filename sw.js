@@ -1,4 +1,4 @@
-const CACHE = 'the-verse-vault-v1-09';
+const CACHE = 'the-verse-vault-v1-12';
 const ASSETS = [
   './', './index.html', './styles.css', './app.js', './manifest.json',
   './admin/index.html', './admin/admin.js', './data/verses.json',
