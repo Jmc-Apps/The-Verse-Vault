@@ -33,7 +33,7 @@ async function loadData(){
   const admin = JSON.parse(localStorage.getItem(LS_ADMIN_DATA) || 'null');
   if(admin) data = admin;
   if(!data) throw new Error('No verse data found.');
-  data.version = '1.14';
+  data.version = '1.15';
   ensureStarterCollection();
   try{ localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); }catch(e){}
   pack = data.packs.find(p=>p.id===data.activePackId) || data.packs[0];
@@ -89,6 +89,19 @@ function setupCertificate(){
   const printBtn = $('#printCertificate');
   if(nameInput) nameInput.addEventListener('input', renderCertificate);
   if(printBtn) printBtn.addEventListener('click', printCertificate);
+  const resetBtn = $('#resetProgress');
+  if(resetBtn) resetBtn.addEventListener('click', resetProgress);
+}
+function resetProgress(){
+  const ok = confirm('Reset progress? This will remove mastered verses, stars, rewards and progress on this device. It will not remove verse collections, the Starter Pack, admin settings, logo, password or backups.');
+  if(!ok) return;
+  progress = {stars:0, completed:{}};
+  localStorage.setItem(LS_PROGRESS, JSON.stringify(progress));
+  updateStats();
+  renderVerseList();
+  renderCertificate();
+  if(currentGame) startGame(currentGame);
+  alert('Progress has been reset.');
 }
 function longDate(){
   return new Date().toLocaleDateString(undefined, {year:'numeric', month:'long', day:'numeric'});
