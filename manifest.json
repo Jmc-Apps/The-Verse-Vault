@@ -3,9 +3,9 @@
   "short_name": "Verse Vault",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#fff6dc",
-  "theme_color": "#4aa3df",
-  "description": "A child-friendly Bible verse memory game.",
+  "background_color": "#10294a",
+  "theme_color": "#1e6fc5",
+  "description": "A bright Bible verse memory PWA with vault-themed learning games.",
   "icons": [
     {
       "src": "assets/icon-192.svg",

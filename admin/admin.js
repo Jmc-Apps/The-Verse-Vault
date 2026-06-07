@@ -1,4 +1,5 @@
 const LS_ADMIN_DATA = 'bvq-admin-data-v1';
+const DEFAULT_LOGO = '../assets/default-title-logo.png';
 const $ = s => document.querySelector(s);
 let data, pack;
 async function init(){
@@ -7,13 +8,13 @@ async function init(){
   else data = await fetch('../data/verses.json').then(r=>r.json());
   bind(); render();
 }
-function save(){ localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); render(); }
+function save(){ data.version='1.02'; localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); render(); }
 function bind(){
-  $('#appTitle').oninput = e => { data.appTitle=e.target.value; save(); };
   $('#activePack').onchange = e => { data.activePackId=e.target.value; save(); };
   $('#savePack').onclick = () => { pack.name=$('#packName').value; pack.description=$('#packDescription').value; pack.translation=$('#translation').value; save(); };
   $('#logoUpload').onchange = handleLogo;
   $('#clearLogo').onclick = () => { data.titleBarImage=''; save(); };
+  $('#restoreLogo').onclick = () => { data.titleBarImage=''; save(); };
   $('#saveVerse').onclick = saveVerse;
   $('#newVerse').onclick = clearVerseForm;
   $('#exportJson').onclick = exportJson;
@@ -22,13 +23,12 @@ function bind(){
 }
 function render(){
   pack = data.packs.find(p=>p.id===data.activePackId) || data.packs[0];
-  $('#appTitle').value = data.appTitle || '';
   $('#activePack').innerHTML = data.packs.map(p=>`<option value="${p.id}" ${p.id===pack.id?'selected':''}>${p.name}</option>`).join('');
   $('#packName').value = pack.name || '';
   $('#packDescription').value = pack.description || '';
   $('#translation').value = pack.translation || '';
-  $('#previewLogo').innerHTML = data.titleBarImage ? `<img class="brandImg" src="${data.titleBarImage}" alt="Title bar image preview">` : '';
-  $('#verseList').innerHTML = pack.verses.map(v=>`<div class="panel"><strong>${v.reference}</strong> <span class="pill">${v.category||''}</span><p>${v.text}</p><div class="buttonRow"><button onclick="editVerse('${v.id}')">Edit</button><button class="danger" onclick="deleteVerse('${v.id}')">Delete</button></div></div>`).join('');
+  $('#previewLogo').innerHTML = `<img class="brandImg" src="${data.titleBarImage || DEFAULT_LOGO}" alt="Title image preview">`;
+  $('#verseList').innerHTML = pack.verses.map(v=>`<div class="verseCard"><strong>${v.reference}</strong> <span class="pill">${v.category||''}</span><p>${v.text}</p><div class="buttonRow"><button onclick="editVerse('${v.id}')">Edit</button><button class="danger" onclick="deleteVerse('${v.id}')">Delete</button></div></div>`).join('');
 }
 function handleLogo(e){
   const file = e.target.files[0];
