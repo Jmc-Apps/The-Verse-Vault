@@ -58,7 +58,7 @@ async function loadData(){
   }
   catch(e){ data = JSON.parse(localStorage.getItem(LS_ADMIN_DATA) || 'null'); }
   if(!data) throw new Error('No verse data found.');
-  data.version = '1.21';
+  data.version = '1.22';
   ensureStarterCollection();
   await loadGlobalBranding();
   try{ localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); }catch(e){}
@@ -68,7 +68,7 @@ async function loadData(){
 }
 function setupBrand(){
   const src = currentLogoSrc();
-  $('#brandImageWrap').innerHTML = `<img class="brandImg" alt="The Verse Vault title artwork" src="${src}">`;
+  $('#brandImageWrap').innerHTML = `<img class="brandImg" alt="The Verse Vault title artwork" src="${src}" onerror="this.onerror=null;this.src='./assets/default-title-logo.png';">`;
 }
 function setupTabs(){
   document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>showTab(btn.dataset.tab)));

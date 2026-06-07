@@ -39,9 +39,10 @@ async function init(){
   else data = await fetch('../data/verses.json?v=' + Date.now(), {cache:'no-store'}).then(r=>r.json());
   data.collections = data.collections || [];
   ensureStarterCollection();
+  await loadAdminGlobalBranding();
   bind(); render();
 }
-function save(){ ensureStarterCollection(); data.version='1.21'; data.collections=data.collections||[]; localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); render(); }
+function save(){ ensureStarterCollection(); data.version='1.22'; data.collections=data.collections||[]; localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); render(); }
 function bind(){
   if($('#activePack')) $('#activePack').onchange = e => { data.activePackId=e.target.value; save(); };
   if($('#savePack')) $('#savePack').onclick = () => { pack.name=$('#packName').value; pack.description=$('#packDescription').value; pack.translation=$('#translation').value; save(); };
@@ -67,13 +68,32 @@ function bind(){
   if($('#saveGithubJson')) $('#saveGithubJson').onclick = saveGithubJson;
   $('#resetDemo').onclick = () => { localStorage.removeItem(LS_ADMIN_DATA); location.reload(); };
 }
+function normalizeAdminLogoSrc(src){
+  src = String(src || '').trim();
+  if(!src) return DEFAULT_LOGO;
+  if(src.startsWith('data:') || src.startsWith('http://') || src.startsWith('https://')) return src;
+  src = src.replace(/^\.\//, '').replace(/^\.\.\//, '');
+  if(src.startsWith('admin/')) src = src.slice(6);
+  if(src.startsWith('assets/') || src.startsWith('branding/')) return '../' + src + (src.includes('?') ? '&' : '?') + 'v=' + Date.now();
+  return src;
+}
+async function loadAdminGlobalBranding(){
+  try{
+    const r = await fetch('../data/branding.json?v=' + Date.now(), {cache:'no-store'});
+    if(r.ok){
+      const b = await r.json();
+      const globalLogo = b.titleBarImage || b.logoPath || '';
+      if(globalLogo) data.titleBarImage = globalLogo;
+    }
+  }catch(e){}
+}
 function currentAdminLogoSrc(){
   const src = pendingLogoDataUrl || localStorage.getItem(LS_PENDING_LOGO) || data.titleBarImage || DEFAULT_LOGO;
-  return src;
+  return normalizeAdminLogoSrc(src);
 }
 function refreshBrandingPreview(){
   const src = currentAdminLogoSrc();
-  const html = `<img class="brandImg" src="${src}" alt="Current title logo preview">`;
+  const html = `<img class="brandImg" src="${src}" alt="Current title logo preview" onerror="this.onerror=null;this.src='../assets/default-title-logo.png';">`;
   if($('#previewLogo')) $('#previewLogo').innerHTML = html;
   if($('#brandingLogoPreview')) $('#brandingLogoPreview').innerHTML = html;
 }
@@ -177,7 +197,7 @@ function backupFileName(){
   return `VerseVault_Backup_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}.json`;
 }
 function exportJson(){
-  data.version = '1.21';
+  data.version = '1.22';
   const json = JSON.stringify(data,null,2);
   $('#jsonOutput').value = json;
   const blob = new Blob([json], {type:'application/json'});
@@ -202,7 +222,7 @@ function restoreBackup(){
       if(!confirm('Restoring a backup will replace the current verses and collections on this device. Continue?')) return;
       const currentPassword = localStorage.getItem(LS_ADMIN_PASSWORD);
       data = restored;
-      data.version = '1.21';
+      data.version = '1.22';
       data.collections = data.collections || [];
       ensureStarterCollection();
       localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data));
@@ -305,7 +325,7 @@ async function saveBrandingToGithub(){
     await githubPutBase64(cfg, logoPath, dataUrlToBase64(logoData), 'Update Verse Vault global logo');
     const branding = { titleBarImage: logoPath, logoPath, updatedAt: new Date().toISOString() };
     await githubPutText(cfg, 'data/branding.json', JSON.stringify(branding, null, 2), 'Update Verse Vault global branding');
-    data.titleBarImage = './' + logoPath + '?v=' + Date.now();
+    data.titleBarImage = logoPath + '?v=' + Date.now();
     localStorage.removeItem(LS_PENDING_LOGO);
     pendingLogoDataUrl = '';
     localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data));
@@ -327,7 +347,7 @@ async function restoreDefaultLogoGlobal(){
     setBrandingMessage('Restoring original logo globally...', true);
     const branding = { titleBarImage: 'assets/default-title-logo.png', logoPath: 'assets/default-title-logo.png', updatedAt: new Date().toISOString(), restoredDefault: true };
     await githubPutText(cfg, 'data/branding.json', JSON.stringify(branding, null, 2), 'Restore Verse Vault default global branding');
-    data.titleBarImage = DEFAULT_LOGO + '?v=' + Date.now();
+    data.titleBarImage = 'assets/default-title-logo.png?v=' + Date.now();
     localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data));
     render();
     setBrandingMessage('Original title logo restored globally. Other browsers will use it after they load the app again.', true);
@@ -376,7 +396,7 @@ async function loadGithubJson(){
     validateBackup(restored);
     if(!confirm('Load the online GitHub verses.json into this Admin app? This replaces the current local admin data on this device.')) return;
     data = restored;
-    data.version = '1.21';
+    data.version = '1.22';
     data.collections = data.collections || [];
     ensureStarterCollection();
     localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data));
@@ -392,12 +412,12 @@ async function saveGithubJson(){
     if(!confirm('Save the current Admin verses and collections to GitHub as data/verses.json?')) return;
     setGithubMessage('Checking current online file...');
     ensureStarterCollection();
-    data.version = '1.21';
+    data.version = '1.22';
     const current = await githubFetchContents(cfg);
     const content = JSON.stringify(data, null, 2);
     const url = `https://api.github.com/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}/contents/${cfg.path.split('/').map(encodeURIComponent).join('/')}`;
     const body = {
-      message: `Update Verse Vault verses.json from Admin v1.20`,
+      message: `Update Verse Vault verses.json from Admin v1.22`,
       content: encodeBase64Unicode(content),
       sha: current.sha,
       branch: cfg.branch
