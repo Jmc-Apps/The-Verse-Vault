@@ -33,7 +33,7 @@ async function loadData(){
   const admin = JSON.parse(localStorage.getItem(LS_ADMIN_DATA) || 'null');
   if(admin) data = admin;
   if(!data) throw new Error('No verse data found.');
-  data.version = '1.13';
+  data.version = '1.14';
   ensureStarterCollection();
   try{ localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); }catch(e){}
   pack = data.packs.find(p=>p.id===data.activePackId) || data.packs[0];
@@ -148,7 +148,7 @@ function renderCertificate(){
     <h1>Certificate of Achievement</h1>
     <p class="certLine">This certifies that</p>
     <div class="certName">${escapeHtml(learner)}</div>
-    <p class="certLine">has successfully mastered the memory verses in</p>
+    <p class="certLine">has successfully mastered the memory verses from</p>
     <div class="certCollection">${escapeHtml(certificateListName())}</div>
     <p class="certLine">Awarded on</p>
     <div class="certDate">${longDate()}</div>

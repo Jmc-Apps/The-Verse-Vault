@@ -30,7 +30,7 @@
 .certAppTitle{font-weight:1000;letter-spacing:.12em;color:var(--blue2);font-size:1.2rem;margin-bottom:4px}.certificateLocked{background:#fffdf6;border:5px solid var(--blue);border-radius:22px;padding:28px;text-align:center;color:var(--navy);box-shadow:0 8px 22px rgba(0,0,0,.16)}.certificateLocked h3{color:var(--red);margin-top:0}.certificateLocked strong{display:inline-block;margin-top:10px;background:var(--yellow);padding:10px 16px;border-radius:999px}button:disabled,input:disabled{opacity:.55;cursor:not-allowed}
 
 
-/* v1.13 certificate print fixes */
+/* v1.14 certificate print fixes */
 .certificateSheet{
   width:min(100%,1120px);
   min-height:680px;
