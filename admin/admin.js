@@ -88,7 +88,8 @@ async function loadAdminGlobalBranding(){
   }catch(e){}
 }
 function currentAdminLogoSrc(){
-  const src = pendingLogoDataUrl || localStorage.getItem(LS_PENDING_LOGO) || data.titleBarImage || DEFAULT_LOGO;
+  const src = pendingLogoDataUrl || localStorage.getItem(LS_PENDING_LOGO) || data.titleBarImage;
+  if(!src) return '../assets/default-title-logo.png?v=' + Date.now();
   return normalizeAdminLogoSrc(src);
 }
 function refreshBrandingPreview(){
