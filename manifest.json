@@ -4,7 +4,7 @@
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#10294a",
-  "theme_color": "#1e6fc5",
+  "theme_color": "#1976d2",
   "description": "A bright Bible verse memory PWA with vault-themed learning games.",
   "icons": [
     {

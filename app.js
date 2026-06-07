@@ -71,7 +71,7 @@ function missingGame(){
   const hidden = shuffle(words).slice(0, Math.min(4, Math.max(2, Math.floor(words.length/5))));
   let html = currentVerse.text;
   hidden.forEach((w,i)=>{ html = html.replace(new RegExp('\\b'+w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b'), `<input class="missing inlineMissing" data-answer="${w}" aria-label="Missing word ${i+1}" placeholder="?">`); });
-  $('#gameArea').innerHTML = `<h3>Missing Words</h3><p>Type the missing words.</p><blockquote>${html}</blockquote><button data-missing-check>Check Answer</button><p id="feedback"></p>`;
+  $('#gameArea').innerHTML = `<h3>Finish the Verse</h3><p>Type the missing words to finish the Bible verse.</p><blockquote>${html}</blockquote><button data-missing-check>Check Answer</button><p id="feedback"></p>`;
 }
 function checkMissing(){
   const inputs=[...document.querySelectorAll('.missing')];
@@ -81,7 +81,7 @@ function checkMissing(){
 }
 function orderGame(){
   const words=cleanWords(currentVerse.text).filter(w=>/[A-Za-z0-9]/.test(w));
-  $('#gameArea').innerHTML = `<h3>Word Order</h3><p>Tap the words in the correct order.</p><div class="answerBox" id="answerBox"></div><div class="wordBank">${shuffle(words).map(w=>`<span class="chip">${w}</span>`).join('')}</div><button data-order-check>Check Order</button><button class="secondary" onclick="startGame('order')">Reset</button><p id="feedback"></p>`;
+  $('#gameArea').innerHTML = `<h3>Verse Builder</h3><p>Build the Bible verse by tapping the words in the correct order.</p><div class="answerBox" id="answerBox"></div><div class="wordBank">${shuffle(words).map(w=>`<span class="chip">${w}</span>`).join('')}</div><button data-order-check>Check Order</button><button class="secondary" onclick="startGame('order')">Reset</button><p id="feedback"></p>`;
   document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{ $('#answerBox').appendChild(c); });
 }
 function checkOrder(){
@@ -93,7 +93,7 @@ function checkOrder(){
 }
 function quizGame(){
   const choices=shuffle([currentVerse, ...shuffle(verses.filter(v=>v.id!==currentVerse.id)).slice(0,3)]);
-  $('#gameArea').innerHTML = `<h3>Reference Quiz</h3><blockquote>${currentVerse.text}</blockquote><p>Which reference matches this verse?</p><div class="buttonRow">${choices.map(v=>`<button data-quiz="${v.id}">${v.reference}</button>`).join('')}</div><p id="feedback"></p>`;
+  $('#gameArea').innerHTML = `<h3>Name that Verse</h3><blockquote>${currentVerse.text}</blockquote><p>Which reference matches this verse?</p><div class="buttonRow">${choices.map(v=>`<button data-quiz="${v.id}">${v.reference}</button>`).join('')}</div><p id="feedback"></p>`;
 }
 function checkQuiz(id){
   const ok = id === currentVerse.id;
