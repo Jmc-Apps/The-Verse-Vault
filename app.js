@@ -33,7 +33,7 @@ async function loadData(){
   const admin = JSON.parse(localStorage.getItem(LS_ADMIN_DATA) || 'null');
   if(admin) data = admin;
   if(!data) throw new Error('No verse data found.');
-  data.version = '1.10';
+  data.version = '1.11';
   ensureStarterCollection();
   try{ localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); }catch(e){}
   pack = data.packs.find(p=>p.id===data.activePackId) || data.packs[0];
@@ -88,24 +88,50 @@ function setupCertificate(){
   const nameInput = $('#certificateName');
   const printBtn = $('#printCertificate');
   if(nameInput) nameInput.addEventListener('input', renderCertificate);
-  if(printBtn) printBtn.addEventListener('click', () => { renderCertificate(); window.print(); });
+  if(printBtn) printBtn.addEventListener('click', () => { renderCertificate(); if(allCurrentVersesMastered()) window.print(); });
 }
 function longDate(){
   return new Date().toLocaleDateString(undefined, {year:'numeric', month:'long', day:'numeric'});
 }
+function escapeHtml(value){
+  return String(value || '').replace(/[&<>]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[ch]));
+}
+function verseMastered(v){
+  return ['missing','order','quiz'].every(g => progress.completed?.[v.id+'-'+g]);
+}
+function masteredCount(){
+  return verses.filter(verseMastered).length;
+}
+function allCurrentVersesMastered(){
+  return verses.length > 0 && masteredCount() === verses.length;
+}
 function renderCertificate(){
   const preview = $('#certificatePreview');
   if(!preview || !pack) return;
-  const learner = ($('#certificateName')?.value || '').trim() || 'Learner Name';
+  const nameInput = $('#certificateName');
+  const printBtn = $('#printCertificate');
+  const total = verses.length;
+  const mastered = masteredCount();
+  const unlocked = allCurrentVersesMastered();
+  if(nameInput) nameInput.disabled = !unlocked;
+  if(printBtn) printBtn.disabled = !unlocked;
+  if(!unlocked){
+    preview.innerHTML = `<div class="certificateLocked">
+      <h3>Certificate Locked</h3>
+      <p>Keep practising! Master all verses in this set to unlock your certificate.</p>
+      <strong>${mastered} of ${total} verses mastered</strong>
+    </div>`;
+    return;
+  }
+  const learner = (nameInput?.value || '').trim() || 'Learner Name';
   const logoSrc = (data && data.titleBarImage) ? data.titleBarImage : DEFAULT_LOGO;
-  const collectionName = pack.name || 'Current Verse Collection';
   preview.innerHTML = `<div class="certificateSheet">
+    <div class="certAppTitle">THE VERSE VAULT</div>
     <img class="certificateLogo" src="${logoSrc}" alt="The Verse Vault logo">
     <h1>Certificate of Achievement</h1>
     <p class="certLine">This certifies that</p>
-    <div class="certName">${learner.replace(/[&<>]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[ch]))}</div>
-    <p class="certLine">has successfully mastered the memory verses in</p>
-    <div class="certCollection">${collectionName.replace(/[&<>]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[ch]))}</div>
+    <div class="certName">${escapeHtml(learner)}</div>
+    <p class="certLine">has successfully mastered the memory verses</p>
     <p class="certLine">Awarded on</p>
     <div class="certDate">${longDate()}</div>
     <p class="certCongrats">Congratulations on mastering God's Word!</p>
