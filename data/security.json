@@ -1,5 +1,5 @@
 {
-  "adminPassword": "0000",
-  "updatedAt": "default",
-  "note": "Global admin password for The Verse Vault. This is for simple admin access control only."
+  "adminPassword": "1405",
+  "updatedAt": "2026-06-08T16:56:46.133Z",
+  "note": "Global admin password for The Verse Vault. Do not use for sensitive/private data."
 }
