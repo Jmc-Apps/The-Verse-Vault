@@ -11,7 +11,7 @@
       "verses": [
         {
           "id": "thank-you-for-making-me-so-wonderfully-complex--1780933492486",
-          "reference": "Thank you for making me so wonderfully complex.",
+          "reference": "Psalm 139:14",
           "category": "Day 1",
           "text": "Thank you for making me so wonderfully complex."
         },
@@ -25,7 +25,7 @@
           "id": "joshua-1-9-1780933536802",
           "reference": "Joshua 1:9",
           "category": "Day 3",
-          "text": "he Lord your God is with you wherever you go."
+          "text": "The Lord your God is with you wherever you go."
         },
         {
           "id": "psalm-89-2-1780933555619",
@@ -103,13 +103,13 @@
       ]
     },
     {
-      "id": "collection-1780933592702",
+      "id": "collection-1780934174979",
       "name": "Maker Fun Factory Memory Verses",
       "protected": false,
       "verses": [
         {
           "id": "thank-you-for-making-me-so-wonderfully-complex--1780933492486",
-          "reference": "Thank you for making me so wonderfully complex.",
+          "reference": "Psalm 139:14",
           "category": "Day 1",
           "text": "Thank you for making me so wonderfully complex."
         },
@@ -123,7 +123,7 @@
           "id": "joshua-1-9-1780933536802",
           "reference": "Joshua 1:9",
           "category": "Day 3",
-          "text": "he Lord your God is with you wherever you go."
+          "text": "The Lord your God is with you wherever you go."
         },
         {
           "id": "psalm-89-2-1780933555619",
