@@ -1,6 +1,6 @@
 {
   "appTitle": "The Verse Vault",
-  "titleBarImage": "branding/logo.png",
+  "titleBarImage": "",
   "activePackId": "starter",
   "packs": [
     {
@@ -10,39 +10,57 @@
       "translation": "WEB",
       "verses": [
         {
-          "id": "thank-you-for-making-me-so-wonderfully-complex--1780933492486",
-          "reference": "Psalm 139:14",
-          "category": "Day 1",
-          "text": "Thank you for making me so wonderfully complex."
+          "id": "john-3-16-web",
+          "reference": "John 3:16",
+          "text": "For God so loved the world, that he gave his one and only Son, that whoever believes in him should not perish, but have eternal life.",
+          "category": "God's Love"
         },
         {
-          "id": "romans-8-31-1780933512819",
-          "reference": "Romans 8:31",
-          "category": "Day 2",
-          "text": "If God is for us, who can ever be against us?"
+          "id": "psalm-23-1-web",
+          "reference": "Psalm 23:1",
+          "text": "Yahweh is my shepherd: I shall lack nothing.",
+          "category": "Trust"
         },
         {
-          "id": "joshua-1-9-1780933536802",
-          "reference": "Joshua 1:9",
-          "category": "Day 3",
-          "text": "The Lord your God is with you wherever you go."
+          "id": "philippians-4-13-web",
+          "reference": "Philippians 4:13",
+          "text": "I can do all things through Christ, who strengthens me.",
+          "category": "Courage"
         },
         {
-          "id": "psalm-89-2-1780933555619",
-          "reference": "Psalm 89:2",
-          "category": "Day 4",
-          "text": "Your unfailing love will last forever."
+          "id": "genesis-1-1-web",
+          "reference": "Genesis 1:1",
+          "text": "In the beginning, God created the heavens and the earth.",
+          "category": "Creation"
         },
         {
-          "id": "jeremiah-29-11-1780933582819",
-          "reference": "Jeremiah 29:11",
-          "category": "Day 5",
-          "text": "For I know the plans I have for you, says the Lord."
+          "id": "psalm-119-105-web",
+          "reference": "Psalm 119:105",
+          "text": "Your word is a lamp to my feet, and a light for my path.",
+          "category": "God's Word"
+        },
+        {
+          "id": "proverbs-3-5-6-web",
+          "reference": "Proverbs 3:5-6",
+          "text": "Trust in Yahweh with all your heart, and don\u2019t lean on your own understanding. In all your ways acknowledge him, and he will make your paths straight.",
+          "category": "Trust"
+        },
+        {
+          "id": "matthew-5-14-web",
+          "reference": "Matthew 5:14",
+          "text": "You are the light of the world. A city located on a hill can\u2019t be hidden.",
+          "category": "Light"
+        },
+        {
+          "id": "romans-8-28-web",
+          "reference": "Romans 8:28",
+          "text": "We know that all things work together for good for those who love God, to those who are called according to his purpose.",
+          "category": "Hope"
         }
       ]
     }
   ],
-  "version": "1.23",
+  "version": "1.24",
   "collections": [
     {
       "id": "starter-pack-protected",
@@ -85,13 +103,13 @@
         {
           "id": "proverbs-3-5-6-web",
           "reference": "Proverbs 3:5-6",
-          "text": "Trust in Yahweh with all your heart, and don’t lean on your own understanding. In all your ways acknowledge him, and he will make your paths straight.",
+          "text": "Trust in Yahweh with all your heart, and don\u2019t lean on your own understanding. In all your ways acknowledge him, and he will make your paths straight.",
           "category": "Trust"
         },
         {
           "id": "matthew-5-14-web",
           "reference": "Matthew 5:14",
-          "text": "You are the light of the world. A city located on a hill can’t be hidden.",
+          "text": "You are the light of the world. A city located on a hill can\u2019t be hidden.",
           "category": "Light"
         },
         {
@@ -101,45 +119,7 @@
           "category": "Hope"
         }
       ]
-    },
-    {
-      "id": "collection-1780934174979",
-      "name": "Maker Fun Factory Memory Verses",
-      "protected": false,
-      "verses": [
-        {
-          "id": "thank-you-for-making-me-so-wonderfully-complex--1780933492486",
-          "reference": "Psalm 139:14",
-          "category": "Day 1",
-          "text": "Thank you for making me so wonderfully complex."
-        },
-        {
-          "id": "romans-8-31-1780933512819",
-          "reference": "Romans 8:31",
-          "category": "Day 2",
-          "text": "If God is for us, who can ever be against us?"
-        },
-        {
-          "id": "joshua-1-9-1780933536802",
-          "reference": "Joshua 1:9",
-          "category": "Day 3",
-          "text": "The Lord your God is with you wherever you go."
-        },
-        {
-          "id": "psalm-89-2-1780933555619",
-          "reference": "Psalm 89:2",
-          "category": "Day 4",
-          "text": "Your unfailing love will last forever."
-        },
-        {
-          "id": "jeremiah-29-11-1780933582819",
-          "reference": "Jeremiah 29:11",
-          "category": "Day 5",
-          "text": "For I know the plans I have for you, says the Lord."
-        }
-      ],
-      "translation": "WEB"
     }
   ],
-  "certificateCollectionName": "Maker Fun Factory Memory Verses"
+  "certificateCollectionName": "Memory Verses"
 }

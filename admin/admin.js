@@ -6,6 +6,8 @@ const DEFAULT_LOGO = new URL('../assets/default-title-logo.png', document.baseUR
 let effectiveAdminLogoSrc = DEFAULT_LOGO;
 const $ = s => document.querySelector(s);
 let data, pack, pendingLogoDataUrl='';
+let globalAdminPassword = '0000';
+let globalSecurityLoaded = false;
 
 const STARTER_VERSES = [
   {id:'john-3-16-web', reference:'John 3:16', text:'For God so loved the world, that he gave his one and only Son, that whoever believes in him should not perish, but have eternal life.', category:"God's Love"},
@@ -25,8 +27,30 @@ function ensureStarterCollection(){
 }
 function isProtectedCollection(c){ return !!(c && (c.protected || c.system || c.id === STARTER_COLLECTION.id)); }
 
-function getPassword(){ return localStorage.getItem(LS_ADMIN_PASSWORD) || '0000'; }
-function requireLogin(){
+function getPassword(){ return globalAdminPassword || localStorage.getItem(LS_ADMIN_PASSWORD) || '0000'; }
+
+async function loadGlobalSecurity(){
+  try{
+    const res = await fetch('../data/security.json?v=' + Date.now(), {cache:'no-store'});
+    if(res.ok){
+      const security = await res.json();
+      if(security && typeof security.adminPassword === 'string' && security.adminPassword.length >= 4){
+        globalAdminPassword = security.adminPassword;
+        localStorage.setItem(LS_ADMIN_PASSWORD, globalAdminPassword);
+        globalSecurityLoaded = true;
+        return;
+      }
+    }
+  }catch(e){}
+  globalAdminPassword = localStorage.getItem(LS_ADMIN_PASSWORD) || '0000';
+  globalSecurityLoaded = false;
+}
+
+async function requireLogin(){
+  const msg = $('#loginMessage');
+  if(msg) msg.textContent = 'Loading security settings...';
+  await loadGlobalSecurity();
+  if(msg) msg.textContent = globalSecurityLoaded ? 'Security settings loaded.' : 'Using default/local password.';
   $('#adminLogin').onclick = () => {
     if($('#adminPasswordInput').value === getPassword()){
       $('#loginGate').style.display='none'; $('#adminApp').style.display='block'; init();
@@ -43,7 +67,7 @@ async function init(){
   await loadAdminGlobalBranding();
   bind(); render();
 }
-function save(){ ensureStarterCollection(); data.version='1.23'; data.collections=data.collections||[]; localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); render(); }
+function save(){ ensureStarterCollection(); data.version='1.24'; data.collections=data.collections||[]; localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data)); render(); }
 function bind(){
   if($('#activePack')) $('#activePack').onchange = e => { data.activePackId=e.target.value; save(); };
   if($('#savePack')) $('#savePack').onclick = () => { pack.name=$('#packName').value; pack.description=$('#packDescription').value; pack.translation=$('#translation').value; save(); };
@@ -168,7 +192,7 @@ function duplicateCollection(){
   save();
   alert(`Created "${copy.name}".`);
 }
-function changePassword(){
+async function changePassword(){
   const current = $('#currentPassword').value;
   const next = $('#newPassword').value;
   const confirm = $('#confirmPassword').value;
@@ -176,9 +200,30 @@ function changePassword(){
   if(current !== getPassword()){ msg.className='bad'; msg.textContent='Current password is incorrect.'; return; }
   if(next.length < 4){ msg.className='bad'; msg.textContent='New password must be at least 4 characters.'; return; }
   if(next !== confirm){ msg.className='bad'; msg.textContent='New passwords do not match.'; return; }
+
+  globalAdminPassword = next;
   localStorage.setItem(LS_ADMIN_PASSWORD, next);
+
+  const securityPayload = {
+    adminPassword: next,
+    updatedAt: new Date().toISOString(),
+    note: 'Global admin password for The Verse Vault. Do not use for sensitive/private data.'
+  };
+
+  try{
+    const cfg = readGithubForm();
+    validateGithubConfig(cfg);
+    msg.className='ok';
+    msg.textContent='Saving password globally to GitHub...';
+    await githubPutText(cfg, 'data/security.json', JSON.stringify(securityPayload, null, 2), 'Update Verse Vault global admin password');
+    msg.className='ok';
+    msg.textContent='Password changed globally. Other browsers will use the new password after reloading.';
+  }catch(err){
+    msg.className='bad';
+    msg.textContent='Password changed on this device, but global save failed. Enter valid GitHub settings/token, then change it again. ' + (err.message || '');
+  }
+
   $('#currentPassword').value=$('#newPassword').value=$('#confirmPassword').value='';
-  msg.className='ok'; msg.textContent='Password changed.';
 }
 function handleLogo(e){
   const file = e.target.files[0];
@@ -215,7 +260,7 @@ function backupFileName(){
   return `VerseVault_Backup_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}.json`;
 }
 function exportJson(){
-  data.version = '1.23';
+  data.version = '1.24';
   const json = JSON.stringify(data,null,2);
   $('#jsonOutput').value = json;
   const blob = new Blob([json], {type:'application/json'});
@@ -240,7 +285,7 @@ function restoreBackup(){
       if(!confirm('Restoring a backup will replace the current verses and collections on this device. Continue?')) return;
       const currentPassword = localStorage.getItem(LS_ADMIN_PASSWORD);
       data = restored;
-      data.version = '1.23';
+      data.version = '1.24';
       data.collections = data.collections || [];
       ensureStarterCollection();
       localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data));
@@ -414,7 +459,7 @@ async function loadGithubJson(){
     validateBackup(restored);
     if(!confirm('Load the online GitHub verses.json into this Admin app? This replaces the current local admin data on this device.')) return;
     data = restored;
-    data.version = '1.23';
+    data.version = '1.24';
     data.collections = data.collections || [];
     ensureStarterCollection();
     localStorage.setItem(LS_ADMIN_DATA, JSON.stringify(data));
@@ -430,12 +475,12 @@ async function saveGithubJson(){
     if(!confirm('Save the current Admin verses and collections to GitHub as data/verses.json?')) return;
     setGithubMessage('Checking current online file...');
     ensureStarterCollection();
-    data.version = '1.23';
+    data.version = '1.24';
     const current = await githubFetchContents(cfg);
     const content = JSON.stringify(data, null, 2);
     const url = `https://api.github.com/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}/contents/${cfg.path.split('/').map(encodeURIComponent).join('/')}`;
     const body = {
-      message: `Update Verse Vault verses.json from Admin v1.23`,
+      message: `Update Verse Vault verses.json from Admin v1.24`,
       content: encodeBase64Unicode(content),
       sha: current.sha,
       branch: cfg.branch
